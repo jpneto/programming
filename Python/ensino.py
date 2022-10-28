@@ -10,8 +10,8 @@ def criar_grelha(xmin, xmax, grelha):
 
 
 
-def desenhar_funcoes(fs, xmin, xmax, grelha=256):
-  fig, ax = plt.subplots(figsize=(5,5))
+def desenhar_funcoes(fs, xmin, xmax, grelha=256, figsize=(5,5)):
+  fig, ax = plt.subplots(figsize=figsize)
   ax.spines['left'].set_position('center')
   ax.spines['right'].set_color('none')
   ax.spines['top'].set_color('none')
