@@ -1,6 +1,7 @@
 import numpy as np 
 import matplotlib.pyplot as plt
 
+
 def criar_grelha(xmin, xmax, grelha):
   x, dx, xs = xmin, abs(xmax-xmin)/grelha, []
   while x <= xmax:
@@ -26,7 +27,7 @@ def desenhar_funcoes(fs, xmin, xmax, grelha=256, figsize=(5,5)):
 
 
 def tab_sinal(poly):
-  """ tabela de variação de sinal """
+  """ mostra a tabela de variação de sinal de um polinómio """
   roots = sorted(np.roots(poly))
   rs = [roots[0]-1] + roots + [roots[-1]+1] # add extra extreme vals 
     
@@ -43,6 +44,7 @@ def tab_sinal(poly):
 
 
 def tab_monotonia(poly): 
+  """ mostra a tabela de monotonia de um polinómio """
   poly_deriv = [] # criar derivada
   for grau,coef in enumerate(poly[:-1]):
     poly_deriv.append(coef*(len(poly)-grau-1))
@@ -110,3 +112,11 @@ def stemplot(stem_data, scale):
     out.append(' %0*i' % (leafwidth, l))
   out.append('\n\nLegenda:\n X | Y  =>  %i*X+Y\n' % scale)
   return ''.join(out)  
+  
+  
+def encherCurva(f, x0, x1, figsize=(6, 6)):
+  """ mostrar a área preenchida debaixo da função f """
+  x = np.arange(x0, x1, 0.01)
+  y = np.array(list(map(f, x)))
+  fig, ax = plt.subplots(1, 1, figsize=figsize)
+  ax.fill_between(x, y)  
