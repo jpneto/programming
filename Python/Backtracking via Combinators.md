@@ -101,7 +101,7 @@ def pipe(gen1, gen2):
 ```python
 g1 = literal(1)
 g2 = literal(2)
-g3 = pipe(g1, g2) # g1 only after g2, like function composition
+g3 = pipe(g1, g2)
 
 run(g3)
 ```
@@ -277,7 +277,7 @@ Let's produce the Pythagorean triples up to a certain limit:
 
 
 ```python
-def less_than(state):
+def increasing(state):
   return len(state)<2 or state[0]<state[1]
 
 def is_pyth(state):
@@ -285,7 +285,7 @@ def is_pyth(state):
   return a*a + b*b == c*c
 
 def pyth_triples(limit):
-  pick_number = pipe(choice(limit), filt(less_than))
+  pick_number = pipe(choice(limit), filt(increasing))
   pick_3 = do(pick_number, 3)
   return run(pipe(pick_3, filt(is_pyth)))
 
@@ -326,8 +326,9 @@ The next standard Python function will be used to prune invalid branches,
 
 
 ```python
-def valid(state):
-  """ checks if first queen does not threat the other queens """
+def is_valid(state):
+  """ state: a sequence of row numbers where each column-consecutive queen is
+      return True if first queen does not threat the other queens """
   for i in range(1,len(state)):
     if ( state[0] == state[i] or       # if same line
          abs(state[0]-state[i]) == i): # or same diagonal
@@ -340,7 +341,7 @@ With all these tools, backtracking the n-queen problem can be solved by applying
 
 ```python
 def queens(n):
-  place_a_queen = pipe(choice(n), filt(valid))
+  place_a_queen = pipe(choice(n), filt(is_valid))
   return run(do(place_a_queen, n))
 
 print(*queens(6), sep='\n')
