@@ -289,11 +289,34 @@ def pyth_triples(limit):
   pick_3 = do(pick_number, 3)
   return run(pipe(pick_3, filt(is_pyth)))
 
-%timeit pyth_triples(50)  
+pyth_triples(50)  
 ```
 
-    96.7 ms ± 29.2 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
-    
+
+
+
+    [[14, 48, 50],
+     [30, 40, 50],
+     [27, 36, 45],
+     [9, 40, 41],
+     [24, 32, 40],
+     [15, 36, 39],
+     [12, 35, 37],
+     [21, 28, 35],
+     [16, 30, 34],
+     [18, 24, 30],
+     [20, 21, 29],
+     [10, 24, 26],
+     [7, 24, 25],
+     [15, 20, 25],
+     [12, 16, 20],
+     [8, 15, 17],
+     [9, 12, 15],
+     [5, 12, 13],
+     [6, 8, 10],
+     [3, 4, 5]]
+
+
 
 ### The n-Queen problem
 
