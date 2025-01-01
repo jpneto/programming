@@ -1,0 +1,77 @@
+
+html, body {
+    height: 100%;
+    margin: 0;
+}
+body {
+    background-color: #fff;
+    font-family: sans-serif;
+    overflow: hidden;
+}
+h1 {
+    font-weight: normal;
+    font-size: 140%;
+}
+table {
+    height: 100%;
+    width: 100%;
+}
+#blocklyArea {
+    height: 99%;
+    text-align: center;
+}
+#problemDescription {
+    width: 80%;
+}
+button {
+    margin: 5px;
+    margin-right: 12px;
+    margin-left: 0;
+    padding: 10px;
+    font-size: large;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    background-color: #eee;
+    color: black;
+}
+button.launch {
+    border: 1px solid #d43;
+    background-color: #d43;
+    color: white;
+}
+button:active {
+    border: 1px solid blue !important;
+}
+button:hover {
+    box-shadow: 2px 2px 5px #888;
+}
+button>img {
+    opacity: 0.6;
+}
+button.disabled {
+    visibility: hidden;
+}
+#toolbarDiv {
+    text-align: center;
+    padding-top: 1em;
+}
+#blockly {
+    position: fixed;
+}
+.classificacao {
+	 overflow: scroll;
+}
+.classificacao table {
+	 border-collapse: collapse;
+	 width: auto;
+	 margin: auto;
+}
+.classificacao  thead {
+    background-color: #bbc; /* #ccc;*/
+}
+.classificacao td {
+    border-bottom: 1px solid #eee;
+}
+.classificacao tr {
+    border-bottom: 1px solid #aaa;
+}

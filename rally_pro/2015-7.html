@@ -1,0 +1,150 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>FCUL Rally Pro</title>
+    <link rel="stylesheet" type="text/css" href="estilo.css">
+    <script type="text/javascript" src="blockly/blockly_compressed.js"></script>
+    <script type="text/javascript" src="blockly/blocks_compressed.js"></script>
+    <script type="text/javascript" src="blockly/javascript_compressed.js"></script>
+    <script type="text/javascript" src="blockly/msg/js/pt.js"></script>
+    <script type="text/javascript" src="fb/blocos_basic.js"></script>
+    <script type="text/javascript" src="fb/blocos_controlo.js"></script>
+    <script type="text/javascript" src="fb/blocos_math.js"></script>
+    <script type="text/javascript" src="fb/listas2018.js"></script>
+    
+    <script>
+       function checkSol() {
+            var proposal = document.forms['form'].elements['proposal'].value;
+            var solution = 1251677700;
+            if (proposal == solution)
+               alert('Correto!');
+            else
+               alert('Incorreto!');            
+            return false;    // the page should not refresh after clicking submit
+       }
+    </script>
+  </head>
+  <body>
+    <table>
+      <tr>
+        <td colspan="2">
+			 <h1>Pelos caminhos de Lisboa</h1>
+		  </td>
+      </tr>
+      <tr>
+		  <td>
+<p><img src="figs/baixa_lisboa.png" width="323" height="200"></p>
+<p>A baixa da cidade de Lisboa, conhecida por baixa Pombalina, é famosa pela organização das suas ruas em quarteirões, em que as ruas formam uma malha de ruas paralelas e perpendiculares. Por uma questão de simplificação, imagine que a cada esquina é atribuído um par de números que a identifica univocamente. Por exemplo, à esquina no canto inferior esquerdo atribuímos o par (1,1); as esquinas à direita desta (mas na mesma rua) ficariam com os pares (2, 1), (3, 1), (4, 1), e assim sucessivamente. A rua acima desta teria as suas esquinas numeradas com (1, 2), (2, 2), (3, 2), (4, 2), etc. Acima desta vem a rua com as esquinas (1, 3), (2, 3), (3, 3), (4, 3), ... E assim sucessivamente para as ruas acima desta. Se um peão estiver na esquina (2, 3) e quiser deslocar-se até à esquina (4, 4) pode seguir vários caminhos. Por exemplo, subir e voltar à direita (que corresponde a passar pelas esquinas (2,3), (3,3), (4,3) e (4,4)); voltar à direita e depois subir ((2,3), (2, 4), (3, 4) e (4, 4)) ou subir, voltar à direita e subir de novo ((2,3), (3,3), (3, 4) e (4, 4)). O que não faz sentido é andar aos ziguezagues para trás e para a frente, que assim podemos nunca mais chegar ao destino. <br><br>O que pretendemos que determinem é: dados dois pares que definem a esquina início e fim, de quantas formas diferentes se pode ir da esquina inicial à esquina final pelo caminho mais curto.</p>
+		  </td>
+		  <td>
+          <p><button onclick="runCode()">Executar</button>
+          
+          <form id="form" onsubmit="return checkSol()">
+	      Resposta: <input id="proposal" type="text" name="resposta" />
+	      <button type="submit">Confirmar</button>
+	    </form>
+		  </td>
+      </tr>
+      <tr>
+        <td id="blocklyArea" colspan="2">
+        </td>
+      </tr>
+    </table>
+    <div id="blocklyDiv" style="position: absolute"></div>
+      <xml id="toolbox" style="display: none">
+   <category name="Ciclos">
+  <block type="controls_repeat_ext"></block>
+  <block type="controls_whileUntil">
+   <title name="MODE">UNTIL</title>
+  </block>
+  <block type="controls_forEach">
+   <title name="VAR">elemento</title>
+  </block>
+ </category>
+ <category name="Controlo">
+  <block type="controls_if"></block>
+ </category>
+ <category name="Lógica">
+  <block type="logic_compare"></block>
+  <block type="logic_operation"></block>
+  <block type="logic_boolean"></block>
+  <block type="logic_ternary"></block>
+ </category>
+ <category name="Matemática">
+  <category name="Básico">
+   <block type="math_number">
+    <title name="NUM">0</title>
+   </block>
+   <block type="math_arithmetic">
+    <title name="OP">ADD</title>
+   </block>
+  <block type="math_constant"></block>
+  </category>
+  <category name="Operações / Funções">
+   <block type="math_single"></block>
+   <block type="math_trig"></block>
+   <block type="math_number_property"></block>
+   <block type="math_change"></block>
+   <block type="math_round"></block>
+   <block type="math_on_list"></block>
+   <block type="math_modulo"></block>
+   <block type="math_constrain"></block>
+  </category>
+  <category name="Números Aleatórios">
+   <block type="math_random_int"></block>
+   <block type="math_random_float"></block>
+  </category>
+ </category>
+ <category name="Listas">
+  <category name="Inicialização">
+   <block type="lists_create_empty"></block>
+   <block type="lists_create_with"></block>
+   <block type="lists_repeat"></block>
+  </category>
+  <category name="Operações / Funções">
+   <block type="lists_length"></block>
+   <block type="lists_isEmpty"></block>
+   <block type="lists_indexOf"></block>
+   <block type="lists_getIndex">
+    <mutation statement="false" at="true"></mutation>
+    <title name="MODE">GET</title>
+    <title name="WHERE">FROM_START</title>
+   </block>
+   <block type="lists_setIndex"></block>
+   <block type="lists_getSublist"></block>
+   <block type="lists_split"></block>
+  </category>
+  <category name="Listas de Dados">
+   <block type="lista_numeros_2018_1"></block>
+   <block type="lista_numeros_2018_2"></block>
+   <block type="lista_numeros_2018_3"></block>
+  </category>
+ </category>
+ <category name="Texto">
+  <category name="Inicialização">
+   <block type="text"></block>
+   <block type="text_join"></block>
+  </category>
+  <category name="Operações / Funções">
+   <block type="text_append"></block>
+   <block type="text_length"></block>
+   <block type="text_isEmpty"></block>
+   <block type="text_indexOf"></block>
+   <block type="text_charAt"></block>
+   <block type="text_getSubstring"></block>
+   <block type="text_changeCase"></block>
+   <block type="text_trim"></block>
+  </category>
+  <category name="Leitura / Escrita">
+   <block type="text_print"></block>
+   <block type="text_prompt"></block>
+   <block type="text_prompt_ext"></block>
+  </category>
+ </category>
+ <category name="Variáveis" custom="VARIABLE"></category>  
+</xml>
+    <script type="text/javascript" src="fb/codigo3.js"></script>
+  </body>
+</html>
+
+

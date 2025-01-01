@@ -1,0 +1,154 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>FCUL Rally Pro</title>
+    <link rel="stylesheet" type="text/css" href="estilo.css">
+    <script type="text/javascript" src="blockly/blockly_compressed.js"></script>
+    <script type="text/javascript" src="blockly/blocks_compressed.js"></script>
+    <script type="text/javascript" src="blockly/javascript_compressed.js"></script>
+    <script type="text/javascript" src="blockly/msg/js/pt.js"></script>
+    <script type="text/javascript" src="fb/blocos_basic.js"></script>
+    <script type="text/javascript" src="fb/blocos_controlo.js"></script>
+    <script type="text/javascript" src="fb/blocos_math.js"></script>
+    <script type="text/javascript" src="fb/listas2018.js"></script>
+    
+    <script>
+       function checkSol() {
+            var proposal = document.forms['form'].elements['proposal'].value;
+            var solution = 508271323092;
+            if (proposal == solution)
+               alert('Correto!');
+            else
+               alert('Incorreto!');            
+            return false;    // the page should not refresh after clicking submit
+       }
+    </script>
+  </head>
+  <body>
+    <table>
+      <tr>
+        <td colspan="2">
+			 <h1>Triângulo de Pascal</h1>
+		  </td>
+      </tr>
+      <tr>
+		  <td>
+          
+<p>O triângulo de Pascal é um objeto matemático muito famoso (cf. figura). Cada elemento da linha seguinte é calculado pela soma dos dois elementos em cima dele da linha anterior.
+    <br>Note que tanto nas linhas como nas colunas os índices começam no zero. Assim, Pascal(0,0)=1, Pascal(6,2)=15, etc.<br>Calcule Pascal(62,51).</p>
+
+<img width="255" height="198" src="figs/pascal.png"  class="center-image" alt="pascal" />
+
+		  </td>
+		  <td>
+          <p><button onclick="runCode()">Executar</button>
+          
+          <form id="form" onsubmit="return checkSol()">
+	      Resposta: <input id="proposal" type="text" name="resposta" />
+	      <button type="submit">Confirmar</button>
+	    </form>
+		  </td>
+      </tr>
+      <tr>
+        <td id="blocklyArea" colspan="2">
+        </td>
+      </tr>
+    </table>
+    <div id="blocklyDiv" style="position: absolute"></div>
+      <xml id="toolbox" style="display: none">
+   <category name="Ciclos">
+  <block type="controls_repeat_ext"></block>
+  <block type="controls_whileUntil">
+   <title name="MODE">UNTIL</title>
+  </block>
+  <block type="controls_forEach">
+   <title name="VAR">elemento</title>
+  </block>
+ </category>
+ <category name="Controlo">
+  <block type="controls_if"></block>
+ </category>
+ <category name="Lógica">
+  <block type="logic_compare"></block>
+  <block type="logic_operation"></block>
+  <block type="logic_boolean"></block>
+  <block type="logic_ternary"></block>
+ </category>
+ <category name="Matemática">
+  <category name="Básico">
+   <block type="math_number">
+    <title name="NUM">0</title>
+   </block>
+   <block type="math_arithmetic">
+    <title name="OP">ADD</title>
+   </block>
+  <block type="math_constant"></block>
+  </category>
+  <category name="Operações / Funções">
+   <block type="math_single"></block>
+   <block type="math_trig"></block>
+   <block type="math_number_property"></block>
+   <block type="math_change"></block>
+   <block type="math_round"></block>
+   <block type="math_on_list"></block>
+   <block type="math_modulo"></block>
+   <block type="math_constrain"></block>
+  </category>
+  <category name="Números Aleatórios">
+   <block type="math_random_int"></block>
+   <block type="math_random_float"></block>
+  </category>
+ </category>
+ <category name="Listas">
+  <category name="Inicialização">
+   <block type="lists_create_empty"></block>
+   <block type="lists_create_with"></block>
+   <block type="lists_repeat"></block>
+  </category>
+  <category name="Operações / Funções">
+   <block type="lists_length"></block>
+   <block type="lists_isEmpty"></block>
+   <block type="lists_indexOf"></block>
+   <block type="lists_getIndex">
+    <mutation statement="false" at="true"></mutation>
+    <title name="MODE">GET</title>
+    <title name="WHERE">FROM_START</title>
+   </block>
+   <block type="lists_setIndex"></block>
+   <block type="lists_getSublist"></block>
+   <block type="lists_split"></block>
+  </category>
+  <category name="Listas de Dados">
+   <block type="lista_numeros_2018_1"></block>
+   <block type="lista_numeros_2018_2"></block>
+   <block type="lista_numeros_2018_3"></block>
+  </category>
+ </category>
+ <category name="Texto">
+  <category name="Inicialização">
+   <block type="text"></block>
+   <block type="text_join"></block>
+  </category>
+  <category name="Operações / Funções">
+   <block type="text_append"></block>
+   <block type="text_length"></block>
+   <block type="text_isEmpty"></block>
+   <block type="text_indexOf"></block>
+   <block type="text_charAt"></block>
+   <block type="text_getSubstring"></block>
+   <block type="text_changeCase"></block>
+   <block type="text_trim"></block>
+  </category>
+  <category name="Leitura / Escrita">
+   <block type="text_print"></block>
+   <block type="text_prompt"></block>
+   <block type="text_prompt_ext"></block>
+  </category>
+ </category>
+ <category name="Variáveis" custom="VARIABLE"></category>  
+</xml>
+    <script type="text/javascript" src="fb/codigo3.js"></script>
+  </body>
+</html>
+
+
