@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=yes">
+  <meta name="description" content="How to submit a problem at the UVa server">
+  <title>Introdução ao servidor UVa</title>
+</head>
+
+<body>
+
+<h1 style="text-align: center;">Introdução ao UVa e à submissão de trabalhos</h1>
+
+<center><span style="font-size: small;"><em>João Pedro Neto</em></span><br>
+<span style="font-size: x-small;"><em>Setembro 2016</em></span></center>
+
+<p>A forma como testamos a correção das nossas soluções é submetendo os nossos algoritmos no servidor da Universidade de <span>Valladolid, conhecido apenas por <strong>UVa</strong>.</span></p>
+<p><span>O primeiro passo é irem ao site, <a target="_blank" href="https://uva.onlinejudge.org/">https://uva.onlinejudge.org</a>, e registarem-se.<br></span></p>
+<p><span>(nota: se n<span>ão conseguirem entrar, aparecendo a mensagem "<em>The page isn’t redirecting properly</em>", apaguem os <em>cookies</em> do <em>browser</em>)</span></span></p>
+<p><span>Quando entrarem no site, pesquisem pelo problema "UVa 102" e entrem no primeiro link (há-de ser <a target="_blank" href="https://uva.onlinejudge.org/index.php?option=com_onlinejudge&amp;Itemid=8&amp;page=show_problem&amp;problem=38">este</a>):</span></p>
+<p><span><img style="display: block; margin-left: auto; margin-right: auto;" src="imgs/step01.jpg" width="540" height="342"></span></p>
+<p style="text-align: left;">Aqui disponibiliza-se o enunciado que se costuma dividir nas seguintes secções:</p>
+<ul>
+<li style="text-align: left;">Contexto e descrição do problema</li>
+<li style="text-align: left;">Qual o significado e formato dos dados de <em>input</em></li>
+<li style="text-align: left;">Qual o significado e formato dos dados de <em>output</em></li>
+<li style="text-align: left;">Um exemplo de <em>input</em></li>
+<li style="text-align: left;">Qual o <em>output</em> que deverá sair para o <em>input</em> anterior</li>
+</ul>
+<p>Ora vamos pensar como resolver este problema. Pensem como poderiam encontrar uma solução antes de continuarmos...</p>
+
+<p style="text-align: center;"><strong>. . .</strong></p>
+<p style="text-align: center;">Seguem-se <em>spoilers</em> :-)</p>
+<p style="text-align: center;"><strong>. . .</strong></p>
+
+<p>Antes de falarmos da solução vamos estabelecer um método de trabalho.</p>
+<p>Vamos criar as nossas soluções Java no Eclipse. Como estes problemas precisam de ler <em>input</em> e escrever <em>output</em>, torna-se cansativo estar sempre a reescrever o <em>input</em> quando testamos o nosso código. Para isso, eu costumo ter no meu <code>main()</code> o seguinte excerto de código:</p>
+
+<blockquote><pre><code>
+if (!new Object(){}.getClass().getName().contains("Main"))
+    try {           // redirect System.in and System.out to in/out text files
+        System.setIn (new FileInputStream("data/uva0102.in.txt" ));
+        System.setOut(new     PrintStream("data/uva0102.out.txt") );
+    } catch (Exception e) {}  
+</code></pre></blockquote>
+
+<p>Ou seja, coloco o input que quero no<code> ficheiro uvaXXXX.in.txt</code> na pasta <code>data</code> que crio no meu projecto Eclipse, e assim não me preciso preocupar mais com o <em>input</em>. No <em>output</em>, qualquer <code>print</code> escreve no ficheiro <code>uvaXXXX.out.txt</code> que me permite consultar e verificar se as soluções obtidas estão corretas.</p>
+<p>Ter atenção que este código serve apenas durante a fase de construção e teste da solução. Mas não levanta problema, dado que para submeter no UVa a classe terá de se chamar <code>Main</code>, o que invalida a guarda do <code>if</code>!</p>
+<p>Outra possibilidade, que funciona no Eclipse, é colocar o nome dos ficheiros de entrada e saída no menu <code>Run | Run Configurations | Common | Standard input and output</code>. Mas como é necessário mudar estes parâmetros cada vez que mudamos de problema, eu prefiro usar o código acima.</p>
+<p style="text-align: center;"><strong>. . .</strong></p>
+<p>Bem, depois de pensar no problema, eu cheguei a esta solução:</p>
+
+<blockquote><pre><code>
+import java.io.*;
+import java.util.*;
+
+public class UVa_102_EcologicalBinPacking {
+    
+    public static void main(String[] args) {
+
+        if (!new Object(){}.getClass().getName().contains("Main"))
+            try {   // redirect System.in and System.out to in/out text files
+                System.setIn (new FileInputStream("data/uva0102.in.txt" ));
+                System.setOut(new     PrintStream("data/uva0102.out.txt") );
+            } catch (Exception e) {}        
+        ///////////////////////////////////////////////////////////////
+         
+        Scanner sc = new Scanner(System.in);
+
+        while (sc.hasNextInt()) {
+            
+            // solve one problem instance
+            String[] lineSplited = sc.nextLine().split(" +");
+
+            int[] bottles = new int[lineSplited.length]; 
+            
+            int i = 0;
+            for(String str : lineSplited)
+                bottles[i++] = Integer.parseInt(str);
+            
+            // There are only six possible options (by lexicographic order):
+            // 1. Bin 1: Brown, Bin 2: Clear, Bin 3: Green (BCG)
+            // 2. BGC
+            // 3. CBG
+            // 4. CGB
+            // 5. GBC
+            // 6. GCB
+            
+            // Compute total sum of bottles, then just subtract those bottles that are not moving.
+            // The total sum must be kept on a long (64 bits) to prevent overflow
+            long total=0;
+            for(int b:bottles)
+                total += b;
+            
+            // The original order is (Code: Color Bin) 
+            //        B1 G1 C1 B2 G2 C2 B3 G3 C3
+            // index   0  1  2  3  4  5  6  7  8
+
+            // assume BCG
+            long result = total - bottles[0] - bottles[5] - bottles[7];
+            String order = "BCG";
+            
+            // now let's test the others:
+            long test = total - bottles[0] - bottles[4] - bottles[8];  // BGC
+            if (test &lt; result) {
+                result = test;
+                order = "BGC";
+            }
+            
+            test = total - bottles[2] - bottles[3] - bottles[7];  // CBG
+            if (test &lt; result) {
+                result = test;
+                order = "CBG";
+            }
+
+            test = total - bottles[2] - bottles[4] - bottles[6];  // CGB
+            if (test &lt; result) {
+                result = test;
+                order = "CGB";
+            }
+
+            test = total - bottles[1] - bottles[3] - bottles[8];  // GBC
+            if (test &lt; result) {
+                result = test;
+                order = "GBC";
+            }
+
+            test = total - bottles[1] - bottles[5] - bottles[6];  // GCB
+            if (test &lt; result) {
+                result = test;
+                order = "GCB";
+            }
+
+            System.out.println(order + " " + result);            
+        }
+        
+        sc.close();
+    }
+}
+</code></pre></blockquote>
+
+<p>Testei com o <em>input</em> do enunciado e o <em>output</em> foi o correto. O que devo fazer em seguida?</p>
+<p>Para muitos dos problemas existentes no UVa há uma forma de testar a correção das nossas soluções. Convém, antes de submeter, testar o nosso programa com mais <em>inputs</em> e, se possível, mais exigentes. Estes<em> inputs</em> normalmente incluem testes nos limites máximos referidos no enunciado. Se o nosso programa falhar, devemos corrigir o problema. Se passar estes testes, a confiança no nosso código melhora substancialmente!</p>
+<p>Para tal, vamos à página do problema e carregamos na opção <strong>Debug</strong>.</p>
+<p style="text-align: center;"><img src="imgs/step02.jpg" width="515" height="215"></p>
+<p>Daí vamos para outra página onde realizaremos os testes:</p>
+<p style="text-align: center;"><img src="imgs/step03.jpg" width="459" height="302"></p>
+<p>Podemos clicar nas suites de testes da caixa da esquerda, e vai-nos aparecer novos <em>inputs</em>. O que devemos fazer agora é copiar estes dados para o nosso ficheiro de teste que está no projecto Eclipse (neste exemplo é o <span style="font-size: small; font-family: courier new,courier,monospace;">data/uva0102.in.txt</span>), e correr novamente o nosso programa.</p>
+<p>Na página do <em>debug</em> há também duas caixas de <em>output</em>:</p>
+<p style="text-align: center;"><img src="imgs/step04.jpg" width="535" height="381"></p>
+<p>Se clicarem no <strong>Get Accepted Output</strong>, aparece-vos o <em>output</em> correcto na caixa da esquerda. Façam <em>copy-paste</em> do <em>output</em> do vosso programa para a caixa da direita. E depois devem comparar com o botão <strong>Compare Outputs</strong>.</p>
+<p>Se a coisa correr bem temos:</p>
+<p style="text-align: center;"><img src="imgs/step05.jpg" width="600" height="105"></p>
+<p>Se não, ele dá-nos mais informação (no exemplo abaixo, eu alterei um dos <em>outputs </em>de propósito):</p>
+<p style="text-align: center;"><img src="imgs/step06.jpg" width="575" height="364"></p>
+<p>Quando estivermos satisfeitos com estes testes, podemos voltar à página do problema para submeter a solução:</p>
+<p style="text-align: center;"><img src="imgs/step07.jpg" width="600" height="283"></p>
+<p></p>
+<p>Vocês podem submeter fazendo <em>copy-paste</em> do problema para a caixa de texto, ou por<em> upload</em>:</p>
+<p style="text-align: center;"><img src="imgs/step08.jpg" width="600" height="500"></p>
+<p>Agora é preciso ter atenção ao seguinte:</p>
+<ul>
+<li>A classe Java que vai ser executada deve chamar-se sempre <span style="font-family: courier new,courier,monospace;">Main</span></li>
+<li>Podem ter outras classes no ficheiro mas nenhuma pode ser classe pública</li>
+<li>Se tiverem um cabeçalho com <span style="font-family: courier new,courier,monospace;">package</span> (o que é natural, se quiserem manter as vossas soluções organizadas) terão de apagar essa linha antes da submissão</li>
+</ul>
+<p>Se isto não for cumprido o servidor não aceita a vossa solução, estando ela correta ou não. Leiam também <a href="https://uva.onlinejudge.org/index.php?option=com_content&amp;task=view&amp;id=15">este pequeno texto</a>.</p>
+<p>Quando carregarem no botão do <em>submit</em>, o sistema volta para a página do problema e diz-vos que a submissão está a decorrer:</p>
+<p style="text-align: center;"><img src="imgs/step09.jpg" width="600" height="371"></p>
+<p>Passado uns segundos podem clicar na opção <strong>My Submissions</strong> e ver o estado da submissão:</p>
+<p style="text-align: center;"><img src="imgs/step10.jpg" width="600" height="280"></p>
+<p>E pronto! Temos um problema resolvido, submetido e aceito no UVa. Agora é passar ao próximo!</p>
+<p>Como sugestão tentem resolver o <a target="_blank" href="https://uva.onlinejudge.org/index.php?option=com_onlinejudge&amp;Itemid=8&amp;page=show_problem&amp;problem=192">UVa 256</a> (nota: por vezes o <em>website</em> não mostra o pdf do enunciado na página mas faz <em>download</em> automático do mesmo).</p>
+<hr>
+<p>nota final: o <a href="http://uhunt.felix-halim.net/" target="_blank">Uhunt</a> é um <em>website</em> ligado ao UVa onde podem:</p>
+<ul>
+<li>ver um relatório dos trabalhos que fizeram, basta colocar o vosso <em>username</em> na pesquisa e observar os problemas já resolvidos,</li>
+<li>na caixa do <em>Competitive Programming </em>é possível ver os problemas resolvidos organizados pelos capítulos do livro onde estes são referidos,</li>
+<li>criar torneios automáticos no <em>Virtual Contests Generator</em> para confirmar entre vocês quem está melhor na programação competitiva :-)</li>
+</ul></div></div><div class="modified">Last modified: Thursday, 13 October 2016, 2:18 PM
+
+</body>
+</html>

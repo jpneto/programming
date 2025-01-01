@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=yes">
+  <meta name="description" content="Submitting a second problem at UVA">
+
+  <script type="text/javascript" id="MathJax-script" async
+         src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>  
+  <title>UVa 256</title>
+</head>
+
+<body>
+
+<h1 style="text-align: center;">UVa 256: Quirksome Squares</h1>
+
+<p>Neste segundo treino vamos resolver e submeter o problema UVa 256.</p>
+<p>Primeiro <a href="https://uva.onlinejudge.org/index.php?option=com_onlinejudge&amp;Itemid=8&amp;page=show_problem&amp;problem=192" target="_blank">leiam o enunciado</a> do problema.</p>
+
+<p>Vamos resolver o problema de duas formas diferentes: por força bruta e depois usando um pouco de matemática para obter uma solução mais inteligente.</p>
+
+<p>Analisando o enunciado percebemos que existem apenas quatro instâncias do problema, para 2, 4, 6, e 8 dígitos. Podíamos simplesmente calcular estas quatro soluções, armazená-las num <em>array</em> de <code>Strings</code>, e imprimir consoante o que fosse pedido. Ou podemos ser um pouco mais preguiçosos (a grande virtude do programador, se bem usada!) e só calcular se for pedido, mas sem nos esquecermos de guardar a solução porque, como se pode ver no exemplo do enunciado, é possível pedir uma instância mais que uma vez.</p>
+
+<p>Como são pedidos poucos dígitos, vamos primeiro fazer à bruta e calcular todas as hipóteses!</p>
+
+<p>Este excerto de código faz esse trabalho:</p>
+
+<blockquote><pre><code>
+ StringBuffer sb = new StringBuffer();      // keep solutions in a StringBuffer
+ String format = "%0" + digits + "d";       // useful for leading zeros
+ int  maxValue = (int)Math.pow(10, digits);
+ int  split    = (int)Math.pow(10, digits/2);
+
+ for(int i=0; i &lt; maxValue; i++) { 
+   // given that 'i' is evenly split in parts 'ab', 
+   // we wish to include only when i == (a+b)^2
+   // eg: 3025 == (30+25)^2,  with i=3025, a=30, b=25
+   int a = i/split,
+       b = i%split;
+     
+   if (i == (a+b)*(a+b)) 
+     // the condition is met, add to current solutions
+     sb.append(String.format(format, i)+"\n");
+ }
+</code></pre></blockquote>
+
+<p>Vejam se entendem este ciclo, ele é a essência desta solução do problema!</p>
+
+<p>Reparem que se usou a função <span style="font-size: small; font-family: courier new,courier,monospace;">String.format</span> para adicionar os zeros à esquerda (<em>leading zeros</em> em inglês). Dá jeito saber o que as classes <em>standard</em> do Java podem fazer: isso poupa-nos muito trabalhinho!</p>
+
+<p>Agora só nos resta adicionar o resto do código para ler o <em>input</em> e escrever o <em>output</em>.</p>
+
+<blockquote><pre><code>
+public class UVa_256_Quirksome_Squares {
+  
+  public static void main(String[] args) {
+
+    /// REMOVE BEFORE SUBMITION ///////////////////////////////////
+    if (1>0)    // if true: read from files; else: read from System.in
+      try {   // redirect System.in and System.out to in/out text files
+        System.setIn (new FileInputStream("data/uva0256.in.txt" ));
+        System.setOut(new     PrintStream("data/uva0256.out.txt") );
+      } catch (Exception e) {}    
+    ///////////////////////////////////////////////////////////////
+    
+    Scanner sc = new Scanner(System.in);
+
+    // there are only four solutions, 
+    // let's compute and save them in case the input repeats itself
+    String[] sols = new String[4];    
+    
+    while (sc.hasNextInt()) {
+      
+      // solve one problem instance
+      int digits = sc.nextInt();      
+
+      if (sols[digits/2-1]==null) {    // if not computed yet...
+        
+        StringBuffer sb = new StringBuffer();      // for increased performance 
+        String format = "%0" + digits + "d";       // useful for leading zeros
+        int  maxValue = (int)Math.pow(10, digits);
+        int     split = (int)Math.pow(10, digits/2);
+
+        // This cycle is where 99.9% of the computation occurs, 
+        // so it must be as light as possible
+        for(int i=0; i &lt; maxValue; i++) {
+          // given that 'i' is evenly split in parts 'ab', 
+          // we wish to include only when i == (a+b)^2
+          // eg: 3025 == (30+25)^2,  with i=3025, a=30, b=25
+          
+          int a = i/split,
+            b = i%split;
+          
+          if (i == (a+b)*(a+b))     
+            // the condition is met, add to current solutions
+            sb.append(String.format(format, i)+"\n");
+        }
+        
+        sols[digits/2-1] = sb.toString();  // save solutions for future use
+      }
+        
+      System.out.print(sols[digits/2-1]);      
+    }
+    sc.close();
+  }
+}
+</code></pre></blockquote>
+
+<p>Reparem também que as soluções que vão sendo calculadas são guardadas. Quando uma nova instância é pedida, verificamos se ela já existe ou não para evitar repetir computações. Este tipo de tática é muitíssimo útil e nós vamos aprender a usá-la para resolver problemas muito mais complicados (e úteis)!</p>
+
+
+<p>Com este código, fomos ao UVa e submetemos (experimentem!). A solução
+ foi aceite e demorou 0.45 segundos. Nada mau para uma força bruta!</p>
+<hr>
+<p>Mas não deixa de ser uma solução pouco elegante. Podemos fazer melhor? Podemos!</p>
+<p>Para isso vamos analisar o problema em termos de Álgebra (como é? A Álgebra serve para alguma coisa?)</p>
+
+<p>A solução do problema passa por encontrar números \(i\) que são compostos por sequência de dígitos \(ab\) tal que:</p>
+
+$$i = (a+b)^2$$
+
+<p>Por exemplo, no enunciado \(i=3025\) composto por \(a=30\) e \(b=25\) é solução porque \(3025=(30+25)^2\)</p>
+
+<p>Ora se i tem d dígitos, a e b são compostos por \(d/2\) dígitos, e o valor máximo de a e b é majorado por \(b_{max}=10^{d/2}\).</p>
+
+<p>Assim temos:</p>
+
+$$i = b_{max} \times a + b$$
+
+<p>Os valores de a e b têm de satisfazer:</p>
+
+$$(a+b)^2 = b_{max} \times a + b$$
+
+<p>desenvolvendo (e agora vem a Álgebra: respirar fundo...):</p>
+
+$$a^2 + 2ab + b^2 = b_{max} \times a + b$$
+
+$$a^2 + (2b-b_{max}) \times a + b^2- b = 0$$
+
+<p>(já acabou?)</p>
+
+<p>Obtemos um polinómio de grau 2 que queremos resolver em a. Como fazer? Para uma instância do problema, geramos os b possíveis (o que é muito menos do que todos os i possíveis) e resolvemos a equação (usando a famosa fórmula resolvente). As soluções inteiras serão aquelas que vamos guardar e imprimir!</p>
+
+<p>Sugiro que tentem implementar esta solução por vocês antes de analisar a solução seguinte:</p>
+
+<p style="text-align: center;"><strong>. . .</strong></p>
+
+<p>Nesta solução incluiu-se uma função auxiliar <code>solveSecondDegreeEquation</code> para calcular as raízes via a fórmula resolvente.</p>
+
+<blockquote><pre><code>
+public class UVa_256_Quirksome_SquaresMath {
+  
+  /**
+   * This method solves ax^2 + bx + c = 0
+   * @return an array with the solutions of the equation
+   * (max 2 solutions; null if there are no solutions)
+   */
+  public static double[] solveSecondDegreeEquation(double a, double b, double c) {
+    // Result values for x 
+    double[] solutions = null;
+
+    double q = b * b - 4 * a * c;
+    if (q > 0 && a != 0) {
+      // case there are two roots
+      solutions = new double[2];
+      solutions[0] = (-b + Math.sqrt(q))/ (2 * a); 
+      solutions[1] = (-b - Math.sqrt(q))/ (2 * a); 
+    }
+    else if (q == 0) {
+      // case there is one root
+      solutions = new double[1];
+      solutions[0] = (-b) / (2 * a); 
+    }
+    else {
+      // case there are no roots
+    }
+    return solutions;
+  }
+
+  /////////////////////////////////////////////////////////////
+  
+  public static void main(String[] args) {
+
+    /// REMOVE BEFORE SUBMITION ///////////////////////////////////
+    if (1>0)    // if true: read from files; else: read from System.in
+      try {   // redirect System.in and System.out to in/out text files
+        System.setIn (new FileInputStream("data/uva0256.in.txt" ));
+        System.setOut(new     PrintStream("data/uva0256.out.txt") );
+      } catch (Exception e) {}    
+    ///////////////////////////////////////////////////////////////
+     
+    Scanner sc = new Scanner(System.in);
+
+    // there are only four solutions, 
+    // let's compute and save them in case the input repeats itself
+    String[] sols = new String[4];    
+    
+    while (sc.hasNextInt()) {
+      
+      // solve one problem instance
+      int digits = sc.nextInt();      
+
+      if (sols[digits/2-1]==null) {    // if not computed yet...
+        
+        List<String> foundSols = new LinkedList<String>();;
+        int bMax = (int)Math.pow(10, digits/2);
+
+        StringBuffer sb = new StringBuffer();      // for increased performance 
+        String format = "%0" + digits + ".0f";     // useful for leading zeros
+
+        for(int b=0; b&lt;bMax; b++) {
+
+          // get quadratic solutions
+          double[] aSols = solveSecondDegreeEquation(1,2*b-bMax,b*b-b);
+          
+          if (aSols!=null)        // if there are solutions...
+            for(double a : aSols)  
+              // only want integer solutions and with (digits/2) digits 
+              if ((int)a == a && a &lt; bMax)
+                // compose solution & add it to list
+                foundSols.add(String.format(format, a*bMax + b)); 
+        }
+        
+        Collections.sort(foundSols);        // sort solutions for presentation purposes
+        for(String sol : foundSols)        // add them into one string
+          sb.append(sol+"\n");
+        
+        sols[digits/2-1] = sb.toString();  // save solution for future use
+      }
+        
+      System.out.print(sols[digits/2-1]);      
+    }
+    sc.close();
+  }
+}
+</code></pre></blockquote>
+
+<p>Quando se submete esta nova versão observamos de imediato o ganho de desempenho. Em vez dos 0.45 segundos, demorou-se 0.07 segundos! A segunda versão foi sete vezes mais rápida. Esta diferença seria ainda maior se o problema admitisse números com 10 ou mais dígitos (nesse caso, a primeira solução de força bruta seria rejeitada com um <a href="https://uva.onlinejudge.org/index.php?option=com_content&amp;task=view&amp;id=16&amp;Itemid=31" target="_blank">TL</a>, i.e., <em>Time Limit Exceeded</em>, porque iria demorar muito mais que os três segundos admissíveis ao cálculo de uma solução.</p>
+
+<p>O uso de conceitos matemáticos é um trunfo na resolução de muitos problemas. É um tema comum nos concursos de programação e a maioria nem precisa de matemática muito avançada. Neste exemplo precisámos apenas de material dado no 2º e 3º ciclo de escolaridade.</p>
+
+<p>O que precisamos é de um espírito crítico quando analisamos um novo problema. E isso vem com a prática. Há medida que forem treinando vão aprender a usar estas técnicas, muitas das quais já conhecem mas que se foram esquecendo por falta de uso. Eis uma boa oportunidade para reverter essa situação. Podem consultar o capítulo 5 do livro do Halim que apresenta bastantes exemplos deste assunto. Com tempo iremos abordar  alguns deles nos treinos.</p>
+
+<p>Happy Coding!</p>
+
+<p>Last modified: Thursday, 13 October 2016, 2:20 PM</p>
+
+</body>
+</html>
