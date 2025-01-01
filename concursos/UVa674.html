@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=yes">
+  <meta name="description" content="dynamic programming">
+
+  <title>UVa 674</title>
+</head>
+
+<body>
+
+<h1 style="text-align: center;">UVa 674: Coins Change</h1>
+<center><span style="font-size: small;"><em>João Pedro Neto</em></span></center>
+
+<p>A descrição do problema encontra-se aqui: <a class="itl" href="https://uva.onlinejudge.org/external/6/674.pdf">674.pdf</a>. A primeira vista está semelhante com o problema UVa166 (Making Change) mas enquanto no segundo o objectivo era encontrar o número mínimo de moedas para fazer o troco, neste problema é necessário calcular o número de maneiras de fazer o troco.</p>
+<p>Se o troco for 6 cents, existem duas maneiras de fazer o troco: 5 + 1 ou 1 + 1 + 1 + 1 + 1 + 1 mas 1 + 5 não é diferente de 5 + 1. Para evitar contar mais de uma vez a mesma combinação vamos considerar as moedas na ordem decrescente de valor.</p>
+<ul>
+<li>Se temos um troco de x cents vamos tentar subtrair o valor da maior moeda:<ol>
+<li>Se x &lt; 50 então vamos tentar a moeda seguinte (25c):</li>
+<li>Se x &gt;= 50 o troco que sobra é x - 50c. Agora podemos:<ol>
+<li>subtrair 50c e experimentar outra vez a mesma moeda</li>
+<li>experimentar com a moeda de valor imediatamente inferior (25c).</li>
+</ol></li>
+</ol></li>
+</ul>
+<p>Este algoritmo é recursivo. Podemos usar uma função que recebe a moeda «corrente» ou a moeda a testar e o valor do troco:</p>
+<pre>solve(iCoin, value)   // iCoin é o índice da moeda num array coins = {50, 25, 10, 5, 1}; value corresponde ao troco</pre>
+<p>A função deve retornar o número de maneiras de conseguir aquele valor de troco. Como vamos subtraindo ao valor do troco, quando value vale 0 encontramos mais uma maneira, neste caso o valor retornado será 1.</p>
+<p>Os passos 2.1 e 2.2 correspondem a duas chamadas recursivas à função. O resultado dessas chamadas deve ser adicionado porque procuramos o numero total de maneiras de conseguir fazer o troco. Ficamos portanto com :</p>
+<pre>solve(iCoin, value) 
+    if (value == 0) return 1
+    diff = value - coins[iCoin]
+    return solve(iCoin, diff) + 
+           solve(iCoin + 1, value)</pre>
+<p>Esta solução é obviamente incompleta. O que acontece quando o valor de <code>value</code> for negativo ? Quando já experimentamos todas moedas ? Vamos em ambos os casos retornar 0 (são combinações de moedas que não permitem fazer o troco) e naturalmente não fazemos chamadas recursivas :</p>
+<pre>solve(iCoin, value) 
+    if (value == 0) return 1
+    if (value &lt; 0 || iCoins == coins.length)
+       return 0
+    diff = value - coins[iCoin]
+    return solve(iCoin, diff) + 
+           solve(iCoin + 1, value)</pre>
+<p>Pode implementar esta solução mas não passará o teste no site do UVa ! É muito ineficiente e os mesmos valores podem vir a ser calculados várias vezes. A solução consiste em usar programação dinâmica. A medida que são calculados os valores da função <code>solve</code> podem ser guardados numa tabela e reutilizados quando necessário. É preciso notar que os valores da função dependem de dois parâmetros será portanto necessário usar uma tabela de duas dimensões:</p>
+<pre>solve(iCoin, value) 
+    if (value == 0) return 1
+    if (value &lt; 0 || iCoins == coins.length)
+       return 0
+    if (solutions[iCoins][value] != 0) 
+       return solutions[iCoins][value]
+    diff = value - coins[iCoin] 
+    count = solve(iCoin, diff) + 
+           solve(iCoin + 1, value)
+    solutions[iCoins][value] = count
+    return count</pre>
+<p id="p1-5-28-1-7">Pode agora implementar a solução em Java e submete-la no site do UVa.</p>
+
+<div class="modified">Last modified: Wednesday, 20 April 2016, 1:44 PM</div>
+
+</body>
+</html>

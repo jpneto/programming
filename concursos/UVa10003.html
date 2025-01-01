@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=yes">
+  <meta name="description" content="dynamic programming">
+
+  <title>UVa 10003</title>
+</head>
+
+<body>
+
+<h1 style="text-align: center;">UVa 10003: Cutting Sticks</h1>
+<center><span style="font-size: small;"><em>João Pedro Neto</em></span></center>
+
+<p>Leia o <a href="https://uva.onlinejudge.org/external/100/10003.pdf">enunciado</a> antes de continuarmos.</p>
+<p>Sabemos que:</p>
+<ul>
+<li>o stick tem dimensão L,</li>
+<li>deve ser cortado N vezes,</li>
+<li>pode ser cortado nos pontos cuts[1] a cuts[N], sendo que todos estes valores são entre 1 e L.</li>
+</ul>
+<p>Fazer uma busca exaustiva de todos os N pontos de corte implicaria uma complexidade O(N!) o que é incomportável para N=50 (50! ~ 3x10^64).</p>
+<p>Este problema, porém, pode ser definido recursivamente.</p>
+<p>Seja o valor do melhor corte entre os pontos <em>left</em> e <em>right</em> designado por costs[left][right]. Como calcular o melhor ponto para cortar o stick entre <em>left</em> e <em>right</em>?</p>
+<p>Admitindo que soubéssemos que o melhor ponto para cortar fosse i, com left &lt; i &lt; right, o custo seria dado por:</p>
+<pre>    costs[left][right] = costs[left][i] + costs[i][right] + (cuts[right] - cuts[left])</pre>
+<p>onde a expressão cuts[right] - cuts[left] denota o tamanho do pedaço do <em>stick </em>que estamos a considerar.</p>
+<p>Mas, claro, nós não sabemos à partida o melhor ponto i para cortar! Temos de o calcular. Felizmente, o número de opções que temos não são muitas: são apenas os pontos de corte entre <em>left</em> e <em>right</em> (um conjunto de opções proporcional a L). Temos apenas de as calcular a todas, e guardar a opção com menor custo. Atualizando a expressão acima:</p>
+<pre>    costs[left][right] =    <strong>min   [</strong> costs[left][i] + costs[i][right] + (cuts[right] - cuts[left]) <strong>]</strong><br />                        <strong>left&lt;i&lt;right</strong></pre>
+<p>Esta é a definição recursiva que precisamos saber para aplicar programação dinâmica.</p>
+<p>Falta-nos só o caso base. Ora o caso mais simples é quanto o <em>stick</em> não tem pontos de corte (ou seja, quando o <em>right</em> é o ponto de corte logo a seguir ao <em>left</em>). Neste caso o seu custo é zero:</p>
+<pre>    costs[left][right] = 0 , left+1==right</pre>
+<p>Também observamos que subproblemas distintos partilham subsubproblemas. Por exemplo, o custo entre o 1º e o 5º pontos de corte partilha subproblemas com o custo entre o 3º e o 6º pontos de corte.</p>
+<p>Portanto, usamos a técnica da memorização para guardar as soluções dos subproblemas intermédios, de forma a aumentar a velocidade de cálculo das respostas.</p>
+<p>A seguinte função calcula o custo óptimo para o subproblema costs[left][right]:</p>
+<pre>static final int UNKNOWN = 0; <br /><br />static void computeSols(int left, int right, int[] cuts, int[][] costs) {<br /><br />    if (costs[left][right] != UNKNOWN)  // already computed!<br />        return;<br />    <br />    if (left+1 == right) {              // base of recursion<br />        costs[left][right] = 0; <br />        return;<br />    }<br />    <br />    int result = Integer.MAX_VALUE;<br />    for (int i=left+1; i&lt;right; i++) {  // search which i-th cut is best<br />        computeSols(left,  i, cuts, costs);<br />        computeSols(i, right, cuts, costs);<br />        result = Math.min(result,       // keep minimum<br />                          costs[left][i] + costs[i][right] + cuts[right] - cuts[left]);<br />    }<br />    costs[left][right] = result;        // don't forget to save solution for future use!!<br />}</pre>
+<p>Uma última nota: nós queremos calcular o custo óptimo do <em>stick</em> original, que começa na posição 0 e termina na posição L. Na nossa notação isso significa calcular costs[0][N+1] (dado que juntamos estes dois "pontos de corte" aos N pontos de corte iniciais). Por isso, adicionamos estes dois extremos aos pontos de corte originais, i.e., juntamos esses dois valores ao <em>array</em> cuts[ ] que é preenchido pela leitura do <em>input</em>.</p>
+<p>Resta-nos ler os dados de <em>input;</em> inicializar as estruturas de forma adequada e realizar os cálculos:</p>
+<pre>public static void main(String[] args) {<br /><br />    Scanner sc = new Scanner(System.in);<br />    <br />    while (true) {<br />        int L = sc.nextInt();       // stick size: 1 &lt;= L &lt; 1000<br />            <br />        if (L==0) <br />            break;<br />        <br />        int N = sc.nextInt();       // 1 &lt;= N &lt;= 50<br />        <br />        int[] cuts = new int[N+2];  // define cutting places array<br />        for(int i=1; i&lt;N+1; i++)    // read cutting points<br />            cuts[i] = sc.nextInt();<br />        cuts[0] = 0;                // add extremities to compute costs[0][N+1]<br />        cuts[N+1] = L;<br />                <br />        int[][] costs = new int[N+2][N+2];<br />        computeSols(0, N+1, cuts, costs);<br />        System.out.println("The minimum cutting is " + costs[0][N+1] + ".");            <br />    }<br />    <br />    sc.close();<br />}</pre>
+<p>Referência: Steven Halim - <em>Competitive Programming 3</em></p></div></div><div class="modified">Last modified: Tuesday, 1 March 2016, 9:56 PM</div></div>
+
+</body>
+</html>

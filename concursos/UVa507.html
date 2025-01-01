@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=yes">
+  <meta name="description" content="dynamic programming">
+
+  <title>UVa 507</title>
+</head>
+
+<body>
+
+<h1 style="text-align: center;">UVa 507: Jill Rides Again</h1>
+<center><span style="font-size: small;"><em>João Pedro Neto</em></span></center>
+
+<p>Leia o <a href="https://uva.onlinejudge.org/external/5/507.pdf">enunciado </a>antes de continuarmos.</p>
+<p>Este é um exemplo do máximo da soma de um intervalo (em inglês,<em> Range Sum Query</em>, RSQ). Dado um array de números positivos e negativos, como</p>
+<pre>23 -10 12 9 -40 32 12 -4 10 6 </pre>
+<p>pretendemos encontrar o intervalo cuja soma seja a maior possível.</p>
+<p>Como existem números negativos é preciso perceber se vale a pena incluí-los ou não. Isso depende dos valores que estão à esquerda e à direita desses negativos. No exemplo acima, vale a pena incluir o -4 mas não o -40.</p>
+<p>A solução clássica é começar no início e ir acumulando os valores enquanto a soma não é negativa. Isto significa que podemos juntar negativos desde que a soma não deixe de ser positiva.</p>
+<p>Por exemplo, no exemplo acima a soma acumulada nas primeiras iterações seria: 23, 23-10=13, 13+12=25, 25+9=34, 34-40=-6. Neste ponto já não vale a pena insistir neste intervalo, e temos de recomeçar à direita do -40. No entanto, devemos gurdar o valor 34 (e os índices do intervalo cuja soma foi 34) dado que esta pode ser a resposta final.</p>
+<p>Então continuaríamos: 32, 32+12=44, 44-4=40, 40+0=50, 50+6=56.</p>
+<p>Este tipo de problema, porém, pode ter diversas respostas com o mesmo valor. Neste caso, diz-se que se quer o intervalo com maior dimensão, e em caso de haver vários, o que aparece primeiro. Vamos ter de incluir estes critérios de desempate no código.</p>
+<p>A abordagem aqui é <em>bottom-up</em>, vamos começar no início do array e ir acumulando a soma (variável running_sum) desde que esta se mantenha positiva:</p>
+
+<blockquote><pre><code>
+static int[] stops;
+static int i, j;
+
+static int running_sum() {
+    int running_sum = 0, answer = 0, i_temp = 0;
+    
+    i = j = i_temp = 1;                    // stop 1 is before the first number
+    for (int k=2; k&lt;stops.length+2; k++) { // stop 2 is after  the first number
+      if (running_sum + stops[k-2] >= 0) {  
+        running_sum += stops[k-2];
+        if (running_sum > answer || (running_sum == answer && (j-i)&lt;(k-i_temp))) {
+            answer = running_sum;          // keep the largest RSQ overall
+            i = i_temp;
+            j = k;
+        }
+      }
+      else {      
+        running_sum = 0;  
+        i_temp = k;       
+      }
+    }
+    return answer;
+}
+</code></pre></blockquote>
+
+
+<p>Só precisamos de ler o input e chamar a função:</p>
+
+<blockquote><pre><code>
+public static void main(String[] args) {
+    
+    Scanner sc = new Scanner(System.in);
+    int nRoutes = sc.nextInt();
+    
+    for(int k=0; k&lt;nRoutes; k++) {
+        int nStops = sc.nextInt();  
+        stops = new int[nStops-1];
+        for(int j=0; j&lt;nStops-1; j++)
+            stops[j] = sc.nextInt();
+
+        if (running_sum()>0)
+            System.out.printf("The nicest part of route %d is between stops %d and %d\n", k+1, i, j);
+        else
+            System.out.printf("Route %d has no nice parts\n", k+1);
+    }
+    sc.close();
+}
+</code></pre></blockquote>
+
+<p></p>
+<p></p>
+<p></p></div></div><div class="modified">Last modified: Monday, 14 March 2016, 6:25 PM</div></div>
+
+</body>
+</html>

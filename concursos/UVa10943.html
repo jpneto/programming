@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=yes">
+  <meta name="description" content="dynamic programming">
+
+  <title>UVa 10943</title>
+</head>
+
+<body>
+
+<h1 style="text-align: center;">UVa 10943: How do you Add?</h1>
+<center><span style="font-size: small;"><em>João Pedro Neto</em></span></center>
+
+<p>Leia o <a href="https://uva.onlinejudge.org/external/109/10943.pdf">enunciado</a> antes de continuarmos.</p>
+<p>Este problema é descrito em [Halim] e tem uma resolução de <a class="autolink" title="Programação Dinâmica" href="https://moodle.ciencias.ulisboa.pt/mod/page/view.php?id=113896">programação dinâmica</a>.</p>
+<p>A ideia central é que podemos deconstruir o problema original de contar quantas somas existem com K parcelas com total N, estabelecendo uma relação do problema original com subproblemas mais simples.É esta relação que nos permitirá desenvolver uma solução de <a class="autolink" title="Programação Dinâmica" href="https://moodle.ciencias.ulisboa.pt/mod/page/view.php?id=113896">programação dinâmica</a>!</p>
+<p>Vamos designar o número de soluções distintas por sum(N,K).</p>
+<p>Por exemplo, se uma das parcelas fosse o número 5, o resto da solução seria dado por sum(N-5, K-1). Isto porque já descontámos 5 valores ao total N, e gastámos uma parcela no número 5. Se a parcela seguinte fosse um 3, o resto da solução seria sum(N-8, K-2)...</p>
+<p>Isto indica que sum(N,K) pode ser dado por N+1 subproblemas, cada um correspondendo a tirar uma parcela com um número de 0 a N:</p>
+<pre>          sum(N,K) = sum(N-0,K-1) + sum(N-1,K-1) + sum(N-2,K-1) + ... + sum(N-N,K-1)</pre>
+<p>Para evitar repetições no cálculo de soluções, vamos guardar numa matriz as soluções sols(N,K) que formos calculando. Para isso criamos a matriz sols como atributo estático da nossa classe:</p>
+<pre>static final int UNKNOWN = 0; <br />static long[][] sols = new long[101][101];   // N,K &lt;= 100, we'll not use indexes 0</pre>
+<p>A seguinte função calcula um valor de sum(N,K) a partir dos seus subproblemas, usando memorização para ir armazenando soluções:</p>
+<pre>static void computeAdds(int N, int K) {<br /><br />    if (sols[N][K] != UNKNOWN)  // already computed: carry on, there's nothing to do...<br />        return;<br />    <br />    if (K==1)<br />        sols[N][K] = 1;   // if there is just one parcel, the only possible solution is N itself<br />    else {<br />        <br />        long sum = 0;<br />        for(int i=0; i&lt;=N; i++) {<br />            computeAdds(N-i, K-1);<br />            sum += sols[N-i][K-1];<br />            sum %= 1000000;  // keep it small<br />        }<br />        sols[N][K] = sum;    // keep solution for future use           <br />    }<br />}</pre>
+<p>Um detalhe sobre o uso do módulo 1000000. O enunciado pede o output neste formato porque os números tornar-se-iam absolutamente gigantescos para N e K grandes. Desta forma, temos a garantia que as soluções dão números relativamente pequenos.</p>
+<p>Este truque é possível porque na <a href="https://en.wikipedia.org/wiki/Modular_arithmetic">aritmética módulo</a> m podemos aplicar o módulo a cada uma das parcelas da soma:</p>
+<pre>       (a + b) mod m == ((a mod m) + b) mod m</pre>
+<p>Nós temos algum hábito deste tipo de aritmética devido à forma como os relógios usam aritmética módulo 12. Eg, se forem agora 11 horas, três horas depois serão duas horas porque (11+3) mod 12 = 2.</p>
+<p>A disciplina de Matemática Discreta explora este tópico (os <a href="https://www.youtube.com/c/Matem%C3%A1ticaDiscretaFCUL/videos">vídeos</a> estão disponíveis no youtube).</p>
+<p>Com esta função resta-nos apenas ler cada par de valores N,K e ir calculando as soluções. De notar que à medida que os pares vão sendo calculados, a matriz sols vai sendo preenchida, e os pares seguintes tenderão a ser calculados mais rapidamente:</p>
+<pre>public static void main(String[] args) {<br /><br />    Scanner sc = new Scanner(System.in);<br />    <br />    while (true) {<br />        int N = sc.nextInt(),  // 1 &lt;= N &lt;= 100<br />            K = sc.nextInt();  // 1 &lt;= K &lt;= 100<br />        <br />        if (N==0 &amp;&amp; K==0)      // pair 0 0 marks EOF<br />            break;<br />        <br />        computeAdds(N,K);<br />        System.out.println(sols[N][K]);            <br />    }<br />    <br />    sc.close();<br />}</pre>
+<p>Referência: Steven Halim - <em>Competitive Programming 3</em></p></div></div><div class="modified">Last modified: Thursday, 11 March 2021, 3:19 PM</div></div>
+
+</body>
+</html>
