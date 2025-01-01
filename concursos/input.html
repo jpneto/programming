@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=yes">
+  <meta name="description" content="How to read large inputs">
+  <title>Ler Input</title>
+</head>
+
+<body>
+
+<h1 style="text-align: center;">Quando é necessário ler muito input</h1>
+
+<center><span style="font-size: small;"><em>João Pedro Neto</em></span></center>
+
+<p>Nós usamos a classe Scanner para ler o input dos problemas. O sua simplicidade é útil para escrevermos rapidamente esta parte da solução. No entanto, o desempenho do <code>Scanner</code> não é muito bom. Se for necessário ler muitos dados (por exemplo, 100.000 inteiros), corremos o risco de demorar demasiado, e não termos tempo para o cálculo da solução.
+
+O código seguinte pode ser-vos útil em situações dessas:</p>
+
+<blockquote><pre><code>
+    import java.io.*;
+    import java.util.*;
+
+    /** Class for buffered reading int and double values
+     *  Ref: https://www.cpe.ku.ac.th/~jim/java-io.html 
+     */
+    class Reader {
+        static BufferedReader reader;
+        static StringTokenizer tokenizer;
+
+        /** call this method to initialize reader for InputStream */
+        static void init(InputStream input) {
+            reader = new BufferedReader( new InputStreamReader(input) );
+            tokenizer = new StringTokenizer("");
+        }
+
+        /** get next word */
+        static String next() throws IOException {
+            while ( ! tokenizer.hasMoreTokens() ) {
+                //TODO add check for eof if necessary
+                tokenizer = new StringTokenizer( reader.readLine() );
+            }
+            return tokenizer.nextToken();
+        }
+
+        static int nextInt() throws IOException {
+            return Integer.parseInt( next() );
+        }
+        
+        static double nextDouble() throws IOException {
+            return Double.parseDouble( next() );
+        }
+        
+        // an example
+        public static void main(String[] args) throws IOException {
+            
+            Reader.init( System.in );
+
+            int n = Reader.nextInt();
+            double x = Reader.nextDouble();
+            
+            System.out.printf("%d, %4.2f\n", n, x);
+        }
+    }
+</code></pre></blockquote>
+
+<p>O Guilherme Espada fez um benchmark comparando o desempenho deste código vs. o do Scanner:</p>
+
+<blockquote><pre><code>
+Benchmark             Mode  Cnt    Score    Error  Units
+Main.measureReader   thrpt   20  349.466 ± 16.058  ops/s
+Main.measureScanner  thrpt   20   39.809 ±  1.076  ops/s
+</code></pre></blockquote>
+
+<p>Observamos que este método de leitura é cerca de nove vezes mais rápido que o Scanner!</p>
+
+<p>Last modified: Friday, 23 September 2016, 8:50 PM</p>
+
+</body>
+</html>

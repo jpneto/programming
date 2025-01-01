@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=yes">
+  <meta name="description" content="dynamic programming">
+  <title>Euler 18 - Maximum Path Sum</title>
+</head>
+
+<body>
+
+<h1 style="text-align: center;">Euler 18 - Maximum Path Sum</h1>
+<center><span style="font-size: small;"><em>João Pedro Neto</em></span></center>
+
+<p>Seja o seguinte <a href="https://projecteuler.net/problem=18">problema</a> do <a href="https://projecteuler.net">projeto Euler</a>.</p>
+<p>Dado um triângulo de números calcular a soma máxima entre os caminhos possíveis desde o vértice até a um valor na base do triângulo.</p>
+<p>No exemplo seguinte, a soma máxima é 23 resultante da soma dos elementos no caminho a vermelho.</p>
+<p style="margin-left: 30px;"><span style="color: #ff0000; font-family: courier new, courier, monospace; font-size: small;"><b>    3</b></span><br /><span style="font-family: courier new, courier, monospace; font-size: small;"><span style="color: #ff0000;"><b>   7</b></span> 4</span><br /><span style="font-family: courier new, courier, monospace; font-size: small;">  2 <span style="color: #ff0000;"><b>4</b></span> 6</span><br /><span style="font-family: courier new, courier, monospace; font-size: small;"> 8 5 <span style="color: #ff0000;"><b>9</b></span> 3</span></p>
+
+<p>Considerem que leem o input para uma matriz Java triangle[][] ficando os valores neste formato:</p>
+<p style="margin-left: 30px;"><span style="font-family: courier new, courier, monospace; font-size: small;"> 3 0 0 0<br /></span>  <span style="font-size: small; font-family: courier new, courier, monospace;">7 4 0 0 </span><br /><span style="font-size: small; font-family: courier new, courier, monospace;"> 2 4 6 0</span><br /><span style="font-size: small; font-family: courier new, courier, monospace;"> 8 5 9 3</span></p>
+
+<p>Uma abordagem Greedy que parece funcionar: começando por cima, escolher o elemento maior entre os dois possíveis da linha abaixo:</p>
+
+<p style="margin-left: 30px;"><span style="color: #ff0000; font-family: courier new, courier, monospace; font-size: small;"><b>    3</b></span><br /><span style="font-family: courier new, courier, monospace; font-size: small;"><span style="color: #ff0000;"><b>   7</b></span> 4</span><br /><span style="font-family: courier new, courier, monospace; font-size: small;">  2 <span style="color: #ff0000;"><b>4</b></span> 6</span><br /><span style="font-family: courier new, courier, monospace; font-size: small;"> 8 5 <span style="color: #ff0000;"><b>9</b></span> 3</span></p>
+<p style="margin-left: 30px;"></p>
+
+<blockquote><pre><code>
+int solveGreed(int[][] triangle) {
+    int sum=triangle[0][0];
+    
+    for(int i=1, currentCol=0; i&lt;SIZE; i++) {   // for each row
+        if (triangle[i][currentCol] &lt; triangle[i][currentCol+1])
+            currentCol++;
+        sum += triangle[i][currentCol];
+    }
+    return sum;
+}
+</code></pre></blockquote>
+
+
+<p>mas não é difícil encontrar um contra-exemplo:</p>
+<p style="margin-left: 30px;"><span style="color: #000000; font-family: courier new, courier, monospace; font-size: small;">    <span style="color: #ff0000;">3</span><br />   7 <span style="color: #ff0000;">4</span><br />  2 4 <span style="color: #ff0000;">6</span><br /> 8 5 9 <span style="color: #ff0000;">30</span></span><span style="font-family: courier new, courier, monospace; font-size: small;"></span></p>
+<p>Uma outra abordagem é a força bruta, ou seja, testar todas as hipóteses. Para um triângulo de altura N existem 2^(N-1) caminhos possíveis. Podemos usar <a class="autolink" title="Bitmasks" href="https://moodle.ciencias.ulisboa.pt/mod/page/view.php?id=113905">bitmasks</a>: cada caminho é representado por N-1 bits de um número inteiro (eg, bit 0 desce pela esquerda, 1 pela direita). Por exemplo, o número 6 cuja representação binária é 110 representa o caminho máximo descrito acima. Já o número 3 é 011 representa o caminho</p>
+<p style="margin-left: 30px;"><span style="font-size: small; font-family: courier new, courier, monospace;">    <span style="color: #ff0000;">3</span></span><br /><span style="font-size: small; font-family: courier new, courier, monospace;">   7 <span style="color: #ff0000;">4</span></span><br /><span style="font-size: small; font-family: courier new, courier, monospace;">  2 4 <span style="color: #ff0000;">6</span></span><br /><span style="font-size: small; font-family: courier new, courier, monospace;"> 8 5 <span style="color: #ff0000;">9</span> 3</span></p>
+<p>Assim podemos implementar este algoritmo:</p>
+
+<blockquote><pre><code>
+int solveBruteForce(int[][] triangle) {
+    int maxSum =0;
+    int nPaths = 2 &lt;&lt; (SIZE-1);
+    
+    for(int i=0; i&lt;nPaths; i++) {
+        int sum = triangle[0][0];
+        for (int j=0, index=0; j&lt;SIZE-1; j++) {
+            index += i >> j & 1;
+            sum   += triangle[j+1][index];
+        }
+        if (sum>maxSum)
+            maxSum = sum;
+    }
+    return maxSum;
+}
+</code></pre></blockquote>
+    
+  
+
+
+<p>Mas a força bruta tem complexidade exponencial na altura N do triângulo, O(2^N)...</p>
+<p>Podemos usar a <a class="autolink" title="Programação Dinâmica" href="https://moodle.ciencias.ulisboa.pt/mod/page/view.php?id=113896">programação dinâmica</a> para calcular a resposta em O(N^2).</p>
+<p>Uma abordagem passa por guardar em cada linha (a contar de cima), a soma máxima atual conseguida pelos caminhos parciais que começam no vértice. No exemplo acima temos</p>
+
+<p style="margin-left: 30px;"><span style="color: #ff0000; font-family: courier new, courier, monospace; font-size: small;"><span style="color: #000000;">    <strong><span style="color: #339966;">3</span></strong>              3               3                  3<br />   7 4           <strong><span style="color: #339966;">10  7</span></strong>           10  7              10  7  <br />  2 4 6   =&gt;    2  4   6   =&gt;  <span style="color: #339966;"><strong>12  14  13</strong></span>   =&gt;    12  14  13 <br /> 8 5 9 3       8  5  9  3     8   5  9   3       <span style="color: #339966;"><strong>20 19  23  16</strong></span><br /></span></span></p>
+
+<p>vamos descendo linha a linha, fazendo as somas de acordo com os máximos parciais de cima. Quando terminamos este processo, o resultado que queremos será o maior valor da linha da base.</p>
+
+<p>O código:</p>
+
+<blockquote><pre><code>
+int solveDP(int[][] triangle) {
+    
+    for(int i=1; i&lt;SIZE; i++) {   // for each row
+        // treat extremities (just one possible sum)
+        triangle[i][0] += triangle[i-1][0];
+        triangle[i][i] += triangle[i-1][i-1];
+        
+        for(int j=1; j&lt;i; j++)
+            triangle[i][j] += Math.max(triangle[i-1][j-1], triangle[i-1][j]);
+    }
+
+    int maxSum=0;
+    for(int i=0; i&lt;SIZE; i++)
+        if (triangle[SIZE-1][i] > maxSum)
+            maxSum = triangle[SIZE-1][i];
+    return maxSum;
+}
+</code></pre></blockquote>
+
+<p>Podem também pensar como se poderia resolver com programação dinâmica começando da base para o vértice.</p>
+
+<p>Para um triângulo com 25 linhas, estes são os resultados e os tempos obtidos:</p>
+
+<p style="margin-left: 30px;"><span style="font-family: courier new, courier, monospace; font-size: small;">Brute Force: 1867, time: 1046 ms</span><br /><span style="font-family: courier new, courier, monospace; font-size: small;">Greed: 1546, time: 0 ms</span><br /><span style="font-family: courier new, courier, monospace; font-size: small;">DP: 1867, time: 0 ms</span></p>
+
+<p>Como seria de esperar, a abordagem gananciosa obteve uma solução sub-óptima. E observamos a diferença de desempenho da força bruta que demorou mais de um segundo enquanto a solução de programação dinâmica demorou menos de 1 ms.</p>
+
+<hr />
+
+<p><em>Um obrigado ao Diogo Sousa por me enviar este problema.</em></p></div></div><div class="modified">Last modified: Tuesday, 7 April 2020, 10:09 AM</div></div>
+
+</body>
+</html>

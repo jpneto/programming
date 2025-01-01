@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=yes">
+  <meta name="description" content="Gredy Algorithms">
+  <title>Algoritmos Gananciosos</title>
+</head>
+
+<body>
+
+<h1 style="text-align: center;">Algoritmos Gananciosos</h1>
+<center><span style="font-size: small;"><em>João Pedro Neto</em></span></center>
+
+<p>Os algoritmos gananciosos (do inglês, <em>greedy algorithms</em>) são algoritmos que optam por uma escolha óptima localmente na esperança de encontrar uma solução óptima globalmente.</p>
+
+<p>Esta técnica infelizmente nem sempre funciona para encontrar a solução óptima, mas quando funciona resulta num algoritmo bastante eficiente.</p>
+
+<p>Vejamos um exemplo clássico dos <em>greedy algorithms</em>: encontrar o número mínimo de moedas que representem uma certa quantia.</p>
+
+<p>Sejam as nossas moedas de Euro: 1, 2, 5, 10, 20, 50, 100 e 200 cêntimos. Qual é o menor número de moedas que somem, por exemplo, 16 cêntimos? Existem várias possibilidades. Posso usar só moedas de 1 (num total de 16 moedas), só moedas de 2 (8 moedas), posso escolher 10+5+1 cêntimos (3 moedas) que neste caso é a solução óptima.</p>
+
+<p>A solução <em>greedy</em> para este problema passa por escolher, a cada momento, a moeda mais valiosa que ainda se pode usar. Se repetirmos  este processo até que tenhamos o valor total, vamos obter a solução óptima.</p>
+
+<p>Um exemplo de solução</p>
+
+<pre style="background-color: #ffffff; color: #000000; font-family: 'Courier New'; font-size: 9,0pt;"><span style="font-size: small;"><span style="color: #000080; font-weight: bold;"></span></span><span style="font-size: small;"></span></pre>
+<pre style="background-color: #ffffff; color: #000000; font-family: 'Courier New'; font-size: 9,0pt;"><span style="font-size: small;"><span style="color: #000080; font-weight: bold;">public class </span>Coins {</span><br><br><span style="font-size: small;">    <span style="color: #000080; font-weight: bold;">static int</span>[] <span style="color: #660e7a; font-style: italic;">coins </span>= {<span style="color: #0000ff;">200</span>, <span style="color: #0000ff;">100</span>, <span style="color: #0000ff;">50</span>, <span style="color: #0000ff;">20</span>, <span style="color: #0000ff;">10</span>, <span style="color: #0000ff;">5</span>, <span style="color: #0000ff;">2</span>, <span style="color: #0000ff;">1</span>};</span><br><br><span style="font-size: small;">    <span style="color: #000080; font-weight: bold;">static int</span>[] coinSolution(<span style="color: #000080; font-weight: bold;">int </span>amount) {</span><br><span style="font-size: small;">        List&lt;Integer&gt; sol = <span style="color: #000080; font-weight: bold;">new </span>LinkedList&lt;Integer&gt;(); <span style="color: #808080; font-style: italic;">// list used to keep selected coins<br></span><span style="color: #808080; font-style: italic;"><br></span><span style="color: #808080; font-style: italic;">        </span><span style="color: #000080; font-weight: bold;">int </span>currentCoin = <span style="color: #0000ff;">0</span>;</span><br><span style="font-size: small;">        <span style="color: #000080; font-weight: bold;">while </span>(amount&gt;<span style="color: #0000ff;">0</span>)</span><br><span style="font-size: small;">            <span style="color: #000080; font-weight: bold;">if </span>(amount &gt;= <span style="color: #660e7a; font-style: italic;">coins</span>[currentCoin]) { <span style="color: #808080; font-style: italic;">// if we can still use current coin<br></span><span style="color: #808080; font-style: italic;">                </span>amount -= <span style="color: #660e7a; font-style: italic;">coins</span>[currentCoin];</span><br><span style="font-size: small;">                sol.add(<span style="color: #660e7a; font-style: italic;">coins</span>[currentCoin]);</span><br><span style="font-size: small;">            } <span style="color: #000080; font-weight: bold;">else<br></span><span style="color: #000080; font-weight: bold;">                </span>currentCoin++;                  <span style="color: #808080; font-style: italic;">// otherwise, go to the next smaller one<br></span><span style="color: #808080; font-style: italic;"><br></span><span style="color: #808080; font-style: italic;">        </span><span style="color: #000080; font-weight: bold;">return </span>sol.stream().mapToInt(i -&gt; i).toArray(); <span style="color: #808080; font-style: italic;">// convert list to int[]<br></span><span style="color: #808080; font-style: italic;">    </span>}</span><br><br><span style="font-size: small;">    <span style="color: #000080; font-weight: bold;">public static void </span>main(String[] args) {</span><br><span style="font-size: small;">        System.<span style="color: #660e7a; font-weight: bold; font-style: italic;">out</span>.println(Arrays.<span style="font-style: italic;">toString</span>(<span style="font-style: italic;">coinSolution</span>(<span style="color: #0000ff;">16</span>)));</span><br><span style="font-size: small;">    }</span><br><span style="font-size: small;">}</span></pre>
+<p>De reparar que as nossas moedas permitem usar a solução <em>greedy</em>, mas nem todos os conjuntos de moedas têm esta propriedade. Por exemplo, se as moedas fossem de 1, 3 e 4 cêntimos, e se quisermos obter a solução óptima para 6 cêntimos, a solução greedy não funciona (dar-nos-ia 4+1+1) para obter a solução óptima (que é 3+3).</p>
+<p>Uma solução geral que possa ser usada para qualquer conjunto inicial de moedas tem de ser resolvida através de programação dinâmica.</p>
+<p>Como exercício tentem resolver o <a href="https://uva.onlinejudge.org/index.php?option=com_onlinejudge&amp;Itemid=8&amp;page=show_problem&amp;problem=2231">UVa 11264</a> que é uma variante deste problema (se ficarem bloqueados, podem ler algumas pistas <a href="http://www.algorithmist.com/index.php/UVa_11264">aqui</a>).</p></div></div><div class="modified">Last modified: Friday, 10 February 2017, 12:19 PM</div>
+
+</body>
+</html>

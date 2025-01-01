@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=yes">
+  <meta name="description" content="backtracking search">
+  <title>Pesquisa por Retrocesso</title>
+</head>
+
+<body>
+
+<h1 style="text-align: center;">Pesquisa por Retrocesso</h1>
+<center><span style="font-size: small;"><em>João Pedro Neto</em></span></center>
+
+<p>Por vezes não há alternativa a ter de procurar por todo o espaço de soluções.</p>
+<p>No entanto podemos ser inteligentes e ir construíndo as soluções 
+passo a passo, e de cada vez que uma solução parcial não for viável (<em>feasible</em>), podemos abandonar esse ramo da pesquisa, voltando para trás (<em>backtracking</em>) para outras soluções parciais. Esta é a essência da pesquisa por retrocesso.</p>
+<p>Claro que só poderemos usar esta técnica em problemas que:</p>
+<ul>
+<li>nos deixem construir soluções parciais,</li>
+<li>que permitem rapidamente verificar se uma solução parcial é viável</li>
+</ul>
+<p>Com a possibilidade de parar a meio da construção de uma solução, o <em>backtracking</em> pode ser muito mais rápido que uma pesquisa que enumere todas as soluções, incluindo soluções não viáveis.</p>
+<p>Outra questão importante é saber criar soluções parciais de modo a 
+que estas se tornem inviáveis o mais rápido possível, dado que é melhor 
+voltar para trás no início do que no fim do processo de construção uma 
+solução.</p>
+<p>Existe muita literatura sobre esta técnica, mas para nós 
+interessa-nos como técnica de pesquisa que permite encontrar soluções em
+ problemas onde temos de pesquisar por todas as soluções viáveis 
+possíveis.</p>
+<p>Um àparte: a <a class="autolink" title="Programação Dinâmica" href="https://moodle.ciencias.ulisboa.pt/mod/page/view.php?id=5367">programação dinâmica</a>
+ evita calcular todas as soluções, permitindo ganhos exponenciais de 
+desempenho ao escolher o que calcular, mas é uma técnica menos geral, 
+nem sempre podendo ser implementada.</p>
+<p>O <em>backtracking</em> pode ser usado em problemas combinatóricos, como encontrar uma solução do Sodoku, ou encontrar uma saída de um labirinto.</p>
+<p id="yui_3_17_2_2_1486754638018_330">Um exemplo clássico é resolver o 
+problema das oito rainhas do Xadrez: colocar oito rainhas no tabuleiro 
+de xadrez de forma a que nenhuma ataque as restantes. A forma de 
+resolver este problema por retrocesso é ir colocando a i-ésima rainha em
+ todas as <a class="autolink" title="Linhas" href="https://moodle.ciencias.ulisboa.pt/mod/page/view.php?id=13402" id="yui_3_17_2_2_1486754638018_329">linhas</a>
+ da i-ésima coluna. Quando uma linha funciona (ie, não entra em conflito
+ com as restantes rainhas já no tabuleiro), tentar colocar a rainha 
+seguinte pelo mesmo algoritmo. Se não for possível colocar a rainha, 
+voltar para trás (porque encontrámos uma solução parcial inviável) e 
+experimentar a rainha anterior numa nova linha. E assim por diante...</p>
+<p>O seguinte código (baseado <a href="http://introcs.cs.princeton.edu/java/23recursion/Queens.java.html">neste</a>) usa esta técnica:</p>
+<pre style="background-color: #ffffff; color: #000000; font-family: 'Courier New'; margin-left: 30px;"><span style="font-size: small;"><span style="color: #000080; font-weight: bold;">public class </span>Queens {</span><br><br><span style="font-size: small;">    <span style="color: #000080; font-weight: bold;">static final int </span><span style="color: #660e7a; font-weight: bold; font-style: italic;">SIZE </span>= <span style="color: #0000ff;">4</span>;  <span style="color: #808080; font-style: italic;">// board size<br></span><span style="color: #808080; font-style: italic;"><br></span><span style="color: #808080; font-style: italic;">    // is it feasible to place the n-th queen there?<br></span><span style="color: #808080; font-style: italic;">    </span><span style="color: #000080; font-weight: bold;">public static boolean </span>isFeasible(<span style="color: #000080; font-weight: bold;">int</span>[] queen_positions, <span style="color: #000080; font-weight: bold;">int </span>n) {</span><br><br><span style="font-size: small;">        <span style="color: #000080; font-weight: bold;">for </span>(<span style="color: #000080; font-weight: bold;">int </span>i=<span style="color: #0000ff;">0</span>; i&lt;n; i++)</span><br><span style="font-size: small;">            <span style="color: #000080; font-weight: bold;">if </span>((queen_positions[i] == queen_positions[n])           ||  <span style="color: #808080; font-style: italic;">// same row<br></span><span style="color: #808080; font-style: italic;">                </span>(queen_positions[i] - queen_positions[n]) == (n - i) ||  <span style="color: #808080; font-style: italic;">// same major diagonal<br></span><span style="color: #808080; font-style: italic;">                </span>(queen_positions[n] - queen_positions[i]) == (n - i))    <span style="color: #808080; font-style: italic;">// same minor diagonal<br></span><span style="color: #808080; font-style: italic;">              </span><span style="color: #000080; font-weight: bold;">return false</span>;</span><br><br><span style="font-size: small;">        <span style="color: #000080; font-weight: bold;">return true</span>;</span><br><span style="font-size: small;">    }</span></pre>
+<p>O método <span style="font-family: courier new,courier,monospace;">isFeasible</span> testa se uma solução parcial é viável. Como referimos isto é uma componente essencial para que o <em>backtracking</em> seja eficiente.</p>
+<p>Já o seguinte método contém o algoritmo de retrocesso:</p>
+<pre style="background-color: #ffffff; color: #000000; font-family: 'Courier New'; margin-left: 60px;"><span style="font-size: small;"><span style="color: #000080; font-weight: bold;">public static void </span>backtrack(<span style="color: #000080; font-weight: bold;">int</span>[] queen_positions, <span style="color: #000080; font-weight: bold;">int </span>k) {</span><br><br><span style="font-size: small;">    <span style="color: #000080; font-weight: bold;">if </span>(k == <span style="color: #660e7a; font-weight: bold; font-style: italic;">SIZE</span>) {</span><br><span style="font-size: small;">        <span style="font-style: italic;">showResult</span>(queen_positions);</span><br><span style="font-size: small;">        <span style="color: #000080; font-weight: bold;">return</span>;</span><br><span style="font-size: small;">    }</span><br><br><span style="font-size: small;">    <span style="color: #000080; font-weight: bold;">for </span>(<span style="color: #000080; font-weight: bold;">int </span>i=<span style="color: #0000ff;">0</span>; i&lt;<span style="color: #660e7a; font-weight: bold; font-style: italic;">SIZE</span>; i++) {</span><br><span style="font-size: small;">        queen_positions[k] = i;</span><br><span style="font-size: small;">        <span style="color: #000080; font-weight: bold;">if </span>(<span style="font-style: italic;">isFeasible</span>(queen_positions, k))</span><br><span style="font-size: small;">            <span style="font-style: italic;">backtrack</span>(queen_positions, k+<span style="color: #0000ff;">1</span>);</span><br><span style="font-size: small;">    }</span><br><span style="font-size: small;">}</span></pre>
+<p>O condicional inicial verifica se teremos concluído uma solução (colocámos todas as rainhas). Se assim for, imprime a solução. Se a solução ainda é parcial, continua a construi-la.</p>
+<p>Neste exemplo, a classe vai imprimir todas as soluções possíveis.</p>
+<p>Segue o resto da classe:</p>
+<pre style="background-color: #ffffff; color: #000000; font-family: 'Courier New'; margin-left: 30px;"><span style="font-size: small;">    <span style="color: #000080; font-weight: bold;">public static void </span>showResult(<span style="color: #000080; font-weight: bold;">int</span>[] queen_positions) {</span><br><span style="font-size: small;">        <span style="color: #000080; font-weight: bold;">for </span>(<span style="color: #000080; font-weight: bold;">int </span>i = <span style="color: #0000ff;">0</span>; i &lt; <span style="color: #660e7a; font-weight: bold; font-style: italic;">SIZE</span>; i++) {  <span style="color: #808080; font-style: italic;">// for each row<br></span><span style="color: #808080; font-style: italic;">            </span><span style="color: #000080; font-weight: bold;">for </span>(<span style="color: #000080; font-weight: bold;">int </span>j = <span style="color: #0000ff;">0</span>; j &lt; <span style="color: #660e7a; font-weight: bold; font-style: italic;">SIZE</span>; j++)  <span style="color: #808080; font-style: italic;">// for each column<br></span><span style="color: #808080; font-style: italic;">                </span>System.<span style="color: #660e7a; font-weight: bold; font-style: italic;">out</span>.print(queen_positions[i] == j ? <span style="color: #008000; font-weight: bold;">"Q "</span>: <span style="color: #008000; font-weight: bold;">". "</span>);</span><br><span style="font-size: small;">            System.<span style="color: #660e7a; font-weight: bold; font-style: italic;">out</span>.println();</span><br><span style="font-size: small;">        }</span><br><span style="font-size: small;">        System.<span style="color: #660e7a; font-weight: bold; font-style: italic;">out</span>.println();</span><br><span style="font-size: small;">    }</span><br><br><span style="font-size: small;">    <span style="color: #000080; font-weight: bold;">public static void </span>main(String[] args) {</span><br><span style="font-size: small;">        <span style="font-style: italic;">backtrack</span>(<span style="color: #000080; font-weight: bold;">new int</span>[<span style="color: #660e7a; font-weight: bold; font-style: italic;">SIZE</span>], <span style="color: #0000ff;">0</span>);</span><br><span style="font-size: small;">    }</span><br><span style="font-size: small;">}</span></pre>
+<p>Se executarmos o <span style="font-family: courier new,courier,monospace;">main</span> vamos obter as soluções para tabuleiros 4x4 (foi o valor dado à constante <span style="font-family: courier new,courier,monospace;">SIZE</span>):</p>
+<p style="margin-left: 30px;"><span style="font-family: courier new,courier,monospace; font-size: small;">. Q . . <br>. . . Q <br>Q . . . <br>. . Q . <br><br>. . Q . <br>Q . . . <br>. . . Q <br>. Q . . </span></p>
+<p></p></div></div><div class="modified">Last modified: Friday, 10 February 2017, 7:23 PM</div>
+ 
+</body>
+</html>

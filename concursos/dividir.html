@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=yes">
+  <meta name="description" content="Divide and Conquer">
+  <script type="text/javascript" id="MathJax-script" async
+         src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>   
+  <title>Dividir para Conquistar</title>
+</head>
+
+<body>
+
+<h1 style="text-align: center;">Dividir para Conquistar</h1>
+<center><span style="font-size: small;"><em>João Pedro Neto</em></span></center>
+
+<p>Nas aulas de AED é referido o algoritmo de pesquisa binária. Para procurar um elemento num vetor ordenado podemos começar pelo elemento do meio e comparar com o que procuramos para ver se devemos continuar na metade direita ou esquerda. Desta forma, cada iteração reduz o espaço de procura a metade, acelerando imenso a pesquisa. De uma pesquisa linear O(n) passamos para uma pesquisa logarítmica O(log n).</p>
+
+<p>Este algoritmo está disponível nas bibliotecas Java em <code>Arrays.binarySearch()</code>:</p>
+
+<pre>       int[] v = new int[] {1, 5, 8, 11, 32, 123, 543, 1200};<br />       <br />       System.out.println(Arrays.binarySearch(v, 11));</pre>
+
+<p>este exemplo devolve 3 dado o elemento 11 procurado está nesse índice.</p>
+
+<p>Existe igualmente o método Collections.binarySearch() onde podemos fornecer um comparador feito por nós. Iremos falar de <a href="https://docs.oracle.com/javase/8/docs/api/java/util/Comparator.html">comparadores</a> em AED.</p>
+
+<p>Este tutorial parte desta ideia de partir o espaço de pesquisa em metade, para tentar encontrar soluções para problemas onde é difícil encontrar uma expressão que resolva o problema diretamente, mas onde as diferentes hipóteses têm um comportamento monótono.</p>
+
+<p>Vejamos um primeiro exemplo. Um cliente chega a um Banco e quer realizar um empréstimo de 1000 euros, para ser pago a 20 prestações mensais iguais com 1% de juros sobre a dívida por pagar a cada prestação. Qual deve ser a prestação mensal?</p>
+
+<p>Ora, se procurarem na net <a href="https://www.vertex42.com/ExcelArticles/amortization-calculation.html">encontram</a> que a fórmula a aplicar é esta:</p>
+
+$$T \frac{r (1+r)^n}{(1+r)^n - 1}$$
+
+<p>onde T é o total, n o número de prestações, e r o juro/prestação.</p>
+<p>Assim, a resposta para a instância acima referida é de 55.42 euros/prestação.</p>
+
+<p style="text-align: center;">***</p>
+
+<p>Mas se tivéssemos num concurso de programação, sem acesso à net para descobrir a fórmula, como calcular esta resposta?</p>
+
+<p>Podemos usar o método da pesquisa binária. Porquê? Porque os diferentes valores para as prestações têm um comportamento monótono. Se pagássemos 100 euros/prestação, o Banco iria dever-nos dinheiro no fim do prazo. Se fosse 200 euros, essa divida seria ainda maior. Por outro lado, se pagássemos apenas 20 euros, haveria um resto por pagar. E assim sucessivamente...</p>
+
+<p>Ou seja, podemos usar o processo da pesquisa binária <em>sobre os valores possíveis da prestação</em>.</p>
+
+<p>Para tal, definimos um intervalo onde sabemos seguramente que a resposta final irá estar. No nosso exemplo, esse intervalo pode ser [0,1000]. De certeza que temos de pagar mais que zero euros/prestação, e de certeza que não temos de pagar o total/prestação (os Bancos certamente gostariam desta possibilidade).</p>
+
+<p>A partir deste intervalo podemos escolher o valor do meio, 500 euros, e verificar quanto sobraria no fim das 20 prestações: -9789,31 euros (!) Ou seja, estamos a pagar demais. Então o valor tem de estar entre [0,500]. Se experimentarmos 250 euros resulta em -4284,56 euros. Então o resultado tem de estar entre [0,250]...</p>
+
+<p>O seguinte método executa este algoritmo:</p>
+
+<blockquote><pre><code>
+private static double findMonthlyPaymentExact(int months, 
+                                              double total, 
+                                              double monthlyInterest) {
+    double r = monthlyInterest-1;
+    double n = months;
+    return total * (r*Math.pow(1+r,n) / (Math.pow(1+r,n)-1));
+}
+
+private static double findMonthlyPayment(int months, 
+                                         double total, 
+                                         double monthlyInterest) {
+double Epsilon = 1e-6;
+    double lo = 0.0, hi = total, mid = 0.0, ans = 0.0;
+    
+    while (lo &lt; hi + Epsilon) { // when the answer is not found yet
+        mid = (lo + hi) / 2.0;    // try the middle value
+        double debt = leftDebt(mid, months, total, monthlyInterest); 
+        if (Math.abs(debt) &lt; Epsilon) { 
+            ans = mid; 
+            break;
+      }
+        if (debt > 0) 
+            lo = mid;
+        else 
+            hi = mid;
+    }
+    return ans;
+}
+</code></pre></blockquote>
+
+<p>Reparem nos seguintes detalhes:</p>
+
+<ul>
+
+<li>Há um Epsilon que nos informa da margem de erro aceitável. Afinal, estamos perante um algoritmo que nos dá uma resposta aproximada. Se quisermos um resultado com duas casas decimais (para incluir euros e cêntimos), deixar a margem de erro abaixo dos 10<sup>-6</sup> parece bastante seguro.</li>
+<li>As variáveis lo e hi definem o intervalo de pesquisa atual [lo, hi] enquanto mid é o valor do meio com o qual testamos o método que calcula os juros. Este método faz a simulação dos pagamentos, prestação a prestação:</li>
+</ul>
+
+<blockquote><pre><code>
+private static double leftDebt(double monthlyPayment, 
+                               int months, 
+                               double total, 
+                               double monthlyInterest) {
+    double debt = total;
+
+    for(int i=0; i&lt;months; i++)
+        debt = debt*monthlyInterest - monthlyPayment;
+
+    return debt;
+}
+</code></pre></blockquote>
+
+<ul>
+
+<li>Essencialmente. o que muda de problema para problema, se usarmos esta técnica, é o algoritmo que calcula o valor do problema para a nossa hipótese 'mid'.</li>
+<li>Reparem no if-then-else da pesquisa. Se a dívida é positiva, significa que o pagamento que experimentámos ainda não chega, tendo de aumentar o valor menor do intervalo, passando de [lo,hi] para [mid,hi]. Se a dívida for negativa, fazemos o inverso.</li>
+<li>Se os valores forem muito grandes temos de usar mid = lo + (hi - lo)/2 para evitar <em>overflows</em>.</li>
+</ul>
+
+<p style="text-align: left;">Esta técnica costuma chamar-se por <strong>método da bissecção</strong>.</p>
+
+<p style="text-align: left;">Antes de continuar, uma curiosidade histórica: nesta <a href="https://moodle.ciencias.ulisboa.pt/pluginfile.php/290662/mod_folder/content/0/Persian_Interest_Formula.pdf?forcedownload=1">página</a> apresenta-se um método usado na Pérsia para calcular os juros, muito similar à fórmula atual, e que se pode justificar a sua precisão através da aproximação com <a href="https://www.khanacademy.org/math/ap-calculus-bc/bc-series-new/bc-10-11/v/maclaurin-and-taylor-series-intuition">polinómios de Maclaurin</a>.</p>
+
+<p style="text-align: center;">***</p>
+
+<p>Vejam agora o problema <a href="https://onlinejudge.org/index.php?option=onlinejudge&amp;Itemid=8&amp;page=show_problem&amp;problem=3003">UVa 11881</a> e tentem resolver o problema usando o método da bisecção. Uma nota, o enunciado fala de haver a hipótese de múltiplas soluções, mas isso não é relevante para os inputs dados. Não considerem essa possibilidade.</p>
+<p>Outros problemas que podem ser abordados com esta técnica:</p>
+<ul>
+<li><a href="https://onlinejudge.org/index.php?option=onlinejudge&amp;page=show_problem&amp;problem=3342">UVa 12190 - Electric Bill</a> (tem de se fazer duas pesquisas para se encontrar a solução desejada)</li>
+<li><a href="https://onlinejudge.org/index.php?option=com_onlinejudge&amp;Itemid=8&amp;page=show_problem&amp;problem=5110">UVa 1753 - Need for Speed</a></li>
+<li><a href="https://onlinejudge.org/index.php?option=onlinejudge&amp;page=show_problem&amp;problem=1282">UVa 10341 - Solve It</a> (a função pedida é monótona em [0,1])</li>
+<li><a href="https://onlinejudge.org/index.php?option=com_onlinejudge&amp;Itemid=8&amp;page=show_problem&amp;problem=3086">UVa 11935 - Through the Desert</a></li>
+<li><a href="https://onlinejudge.org/index.php?option=onlinejudge&amp;page=show_problem&amp;problem=2408">UVa 11413 - Fill the Containers</a></li>
+<li><a href="https://onlinejudge.org/index.php?option=com_onlinejudge&amp;Itemid=8&amp;page=show_problem&amp;problem=3183">UVa 12032 - The Monkey and the oiled Bamboo</a></li>
+<li><a href="https://onlinejudge.org/index.php?option=com_onlinejudge&amp;Itemid=8&amp;page=show_problem&amp;problem=5053">UVa 13142 - Destroy the Moon to Save the Earth</a></li>
+<li><a href="https://onlinejudge.org/index.php?option=com_onlinejudge&amp;Itemid=8&amp;page=show_problem&amp;problem=4656">UVa 12791 - Lap</a></li>
+</ul>
+<p></p></span></div></div><div class="modified">Last modified: Tuesday, 15 March 2022, 3:27 PM</div></div>
+
+</body>
+</html>

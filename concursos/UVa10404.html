@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=yes">
+  <meta name="description" content="dynamic programming">
+
+  <title>UVa 10404</title>
+</head>
+
+<body>
+
+<h1 style="text-align: center;">UVa 10404: Bachet's Game</h1>
+<center><span style="font-size: small;"><em>João Pedro Neto</em></span></center>
+
+<p>Leia o <a href="https://uva.onlinejudge.org/external/104/10404.html">enunciado</a> antes de continuarmos.</p>
+<p>Como de costume, para resolver o problema usando DP temos de encontrar uma descrição recursiva da solução.</p>
+<p>Seja bachet(N) igual a 1 se o próximo jogador ganha com N pedras em jogo, e seja igual a 2 no caso contrário (ie, o seu adversário ganha).</p>
+<p>Seja moves[ ] o vector com as retiradas de pedras possível.</p>
+<p>Uma posição é vencedora se houver uma jogada que torne a posição resultante numa posição perdedora (pois será a vez do adversário jogar), ou seja, para bachet[N] = 1, tem de existir pelo menos uma posição bachet(N - moves[i]) = 2, porque isso significa que com N-moves[i] pedras, a vitória será, não do próximo jogador mas do seu adversário (ie, o jogador actual, dado que os jogadores alternam a vez).</p>
+<p>Temos assim a nossa relação de recorrência:</p>
+<pre>bachet(N) = 1 sse existe i : bachet[N - moves[i]] == 2<br />bachet(N) = 2 caso contrário</pre>
+<p>E não nos podemos esquecer da base da recursão: uma mesa com zero pedras é uma derrota do próximo jogador</p>
+<pre>bachet(0) = 2</pre>
+<p>Traduzindo esta relação para Java:</p>
+<pre>    static final int UNKNOWN = 0;<br /><br />    static int bachet(int N) {<br />      if (sols[N] == UNKNOWN) {<br />          sols[N] = 2;      // assume victory for 2nd player, unless:<br />          for(int move=0; move&lt;moves.length; move++)<br />              if (N&gt;=moves[move] &amp;&amp; bachet(N-moves[move])==2)<br />                 sols[N] = 1; <br />      }<br />      return sols[N];<br />    }</pre>
+<p>Este tipo de abordagem de começar no N final e ir descendo para valores mais pequenos chama-se uma abordagem <strong>top-down</strong>. Ela tem uma vantagem: só são calculadas as soluções necessários ao cálculo de bachet(N).</p>
+<p>Por exemplo, se N=30, e moves = [7,10,15] obtemos este array de soluções</p>
+<pre>sols = [2, 2, 2, 2, 0, 2, 2, 0, 1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 2, 0, 0, 0, 0, 0, 0, 1]   </pre>
+<p>Todas as posições zero não foram calculadas porque não faziam parte do cálculo de bachet(30). Isto pode significar grandes poupanças de tempo!</p>
+<p>A desvantagem é que a forma natural de resolver por <em>top-down</em> é usar recursão, e isso pode levantar problemas de <em>StackOverflow</em> para números muito grandes (como neste caso, dado que o N pode ser 1000000).</p>
+<p>A alternativa é uma abordagem <strong>bottom-up</strong> cuja forma natural de resolver é usar iteração, e que neste caso nos garante uma solução. Uma solução <em>bottom-up</em> começa da solução com zero pedras e vai construíndo o vector de soluções passo a passo:</p>
+<pre>    static int bachet(int N) {<br /><br />        for(int i=1; i&lt;=N; i++) {<br />            sols[i] = 2;    // assume victory for 2nd player, unless:<br />            for(int move=0; move&lt;moves.length; move++)<br />                if (i-moves[move] &gt;= 0 &amp;&amp; sols[i-moves[move]] == 2)<br />                    sols[i] = 1; <br />        }<br />        return sols[N];<br />    }</pre>
+<p>Isto significa que o vector de soluções é totalmente calculado. No exemplo anterior teríamos:</p>
+<pre>sols =  [2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 1, 1]  </pre>
+<p>O resto do programa para ler e imprimir os resultados:</p>
+<pre>    public static void main(String[] args) {<br />        <br />        Scanner sc = new Scanner(System.in);<br />        while (sc.hasNextInt()) {<br />            <br />            int      N = sc.nextInt();<br />            int nMoves = sc.nextInt();<br />            <br />            moves = new int[nMoves];<br />            for(int i=0; i&lt;nMoves; i++)<br />                moves[i] = sc.nextInt();<br />            <br />              sols = new int[N+1];<br />            sols[0] = 2;<br />            <br />            System.out.printf("%s wins\n", bachet(N) == 1 ? "Stan" : "Ollie");<br />        }<br />        sc.close();<br />    }</pre>
+<p></p>
+<p></p></div></div><div class="modified">Last modified: Wednesday, 9 March 2016, 9:27 PM</div></div>
+
+</body>
+</html>

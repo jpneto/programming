@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=yes">
+  <meta name="description" content="Abour floats and doubles">
+  <title>Floats e Doubles</title>
+</head>
+
+<body>
+
+<h1 style="text-align: center;">Sobre Floats e Doubles</h1>
+
+<center><span style="font-size: small;"><em>João Pedro Neto</em></span></center>
+
+<blockquote>
+<p align="left">"<i>95% of folks out there are completely clueless about floating-point.</i>" - James Gosling (o «pai» do Java)</p>
+</blockquote>
+
+<p>Primeira nota: se puder evitar usar os tipos <i>float</i> e <i>double</i>, use antes os tipos inteiros, mais rápidos e mais fiáveis. Como nem sempre isso é possível, convém conhecermos algumas das características e comportamentos dos tipos ditos reais.</p>
+
+<p>Este tutorial tenta apresentar alguns desses problemas. Este texto é baseado nas referências indicadas abaixo. Para maiores detalhes é aconselhável lê-las com atenção.</p>
+
+<h3>Representação</h3>
+
+<p>O Java usa um subconjunto do padrão <a href="http://ieeexplore.ieee.org/document/4610935/?part=1">IEEE 754</a> que define uma representação binária de números reais em vírgula flutuante.</p>
+<p>Um float é representado em 32 bits e cada combinação desses bits representa um número. A sua definição é a seguinte:</p>
+
+<p align="center"><span style="font-family: Courier New;">(-1)<sup>s</sup> . m . 2 <sup>(e-127)</sup></span></p>
+<p>onde</p>
+
+<ul>
+    <li><code>s</code> (o bit 31) representa o sinal que define se o número é positivo ou negativo</li>
+    <li><code>e</code> é representado por 8 bits (bits 23 a 30) e é o expoente (a menos de 127)</li>
+    <li><code>m</code> é representado por 23 bits (bits 0 a 22) e é a mantissa (sendo normalizada para estar entre 0.5 e 1)</li>
+</ul>
+
+<p>Por exemplo, o valor 0.085 é representado por 00111101101011100001010001111011</p>
+
+<blockquote><pre><code>
+      binário:   0 01111011 01011100001010001111011
+      decimal:   0    123          3019899
+                 s     e              m
+</code></pre></blockquote>
+
+<p>o que resulta em (o 2<sup>23</sup> é para normalizar o valor m):</p>
+<p align="center"><code>&nbsp;&nbsp;&nbsp; 2<sup>e-127</sup> (1 + m / 2<sup>23</sup>) = 2<sup>-4</sup>(1 + 3019899/8388608) = 11408507/134217728</code></p>
+
+<p>Se fizermos as contas, o resultado desta fração é 0.085000000894069671630859375.</p>
+
+<p>O que concluímos deste pequeno exemplo? Não fomos capazes de armazenar o número 0.085! O que guardamos é a melhor aproximação possível dados os 32 bits disponíveis. Assim, há de imediato um erro associado à representação deste número.</p>
+
+<p>O tipo double tem uma representação similar mas usa 64 bits. Isto implica que há 500 milhões de doubles entre cada dois valores consecutivos de tipo float. O expoente tem 11 bits (a menos de 1023) e uma mantissa de 52 bits. Mas o problema da aproximação não fica resolvido, a única coisa que obtemos é uma melhor aproximação.</p>
+
+<p>Mesmo o número 0.1 não tem uma representação exata em binário. Uma décima em binário é representado pela sequência infinita</p>
+
+<p align="center"><span style="font-family: Courier New;">0.0001100<span style="text-decoration: underline;">1100</span>1100<span style="text-decoration: underline;">1100</span>... </span></p>
+
+<p>e qualquer espaço reservado no respectivo tipo real dá-nos apenas uma aproximação. Se guardássemos os primeiros 20 bits, o número realmente descrito seria 0.09999847412109375. Se fossem os primeiros 40 bits, guardaríamos realmente o número 0.0999999999994543031789362430572509765625.</p>
+
+<p>Podem fazer as vossas experiências de conversão nesta <a href="http://www.exploringbinary.com/binary-converter/"> página</a>.</p>
+
+<p>O problema da aproximação não ocorre apenas no sistema binário. Por exemplo, o número 1/3 não tem uma representação exacta em base 10 (1/3 = 0.333333333...), enquanto que em base 3 o número 1/3 é representado por 0.1.</p>
+
+<hr>
+
+<p>Podemos fazer estas experiências no Java:</p>
+
+
+<blockquote><pre><code>
+import java.math.BigDecimal;
+  ...
+BigDecimal bd1 = new BigDecimal(0.1);
+System.out.println(bd1);
+</code></pre></blockquote>
+
+<p>produz:</p>
+
+<blockquote>
+<p><code> 0.1000000000000000055511151231257827021181583404541015625</code></p>
+</blockquote>
+
+<p>de notar que os valores BigDecimal são imutáveis. Para somar dois BigDecimals fazer, por exemplo:</p>
+
+<blockquote><pre><code>
+System.out.println( bd1.add(new BigDecimal(0.05)) );  
+// 0.15000000000000000832667268468867405317723751068115234375
+</code></pre></blockquote>
+
+<p>Para comparar não usar o <span style="font-family: Courier New; font-size: small;" size="2">equals()</span> mas sim o <span style="font-family: Courier New; font-size: small;" size="2">compareTo()</span>.</p>
+
+<p>Esta classe tem também um construtor estrito onde fornecemos os números em formato de string para evitar os problemas de aproximação:</p>
+
+<blockquote><pre><code>
+System.out.println(new BigDecimal("0.1"));
+// 0.1
+</code></pre></blockquote>
+
+<p>Mais info sobre a classe <a href="https://docs.oracle.com/javase/7/docs/api/java/math/BigDecimal.html"> aqui</a>.</p>
+
+<p>Podem usar este pedaço de código para explorar a representação dos números do Java.</p>
+
+<blockquote><pre><code>
+double d = 0.1;
+System.out.print("IEEE 754 representation of " + d + " = ");
+System.out.println(Long.toBinaryString(Double.doubleToLongBits(d)));
+// IEEE 754 representation of 0.1 = 11111110111001100110011001100110011001100110011001100110011010
+</code></pre></blockquote>
+
+<p>Os tipos reais ainda possuem valores especiais para representar os infinitos negativo e positivo, bem como NaN que representa uma ausência de número (por exemplo, produzido quando é avaliado 0/0 ou a raiz quadrada de um número negativo). Estes valores existem para fechar as operações do float ou double, i.e., para não haver possibilidade de criar um valor que não seja representado pelo tipo usando apenas as suas operações.&nbsp;O custo deste fecho é um conjunto complicado de regras de excepção para tratar estes valores (cf. classe <a href="https://docs.oracle.com/javase/7/docs/api/java/lang/Double.html">Double</a>).</p>
+
+<hr>
+
+<p>Não se deve usar o operador == para comparar floats ou doubles:</p>
+<blockquote>
+<pre style="color: #000000; font-family: Courier New; background-color: #ffffff;"><span style="color: #000080; font-weight: bold;"><span style="font-size: small;">double </span></span><span style="font-size: small;">x = <span style="color: #0000ff;">10</span>;
+<span style="color: #000080; font-weight: bold;">double </span>y = Math.<span style="font-style: italic;">sqrt</span>(x);
+System.<span style="color: #660e7a; font-weight: bold; font-style: italic;">out</span>.println( x == y*y ? <span style="color: #008000; font-weight: bold;">"igual" </span>: <span style="color: #008000; font-weight: bold;">"diferente"</span>);</span><span style="color: #808080; font-style: italic;">
+<span style="font-size: small;">// diferente</span></span></pre>
+</blockquote>
+<p>ouch!</p>
+<p>Temos de dar alguma tolerância:</p>
+<blockquote>
+<pre style="color: #000000; font-family: Courier New; background-color: #ffffff;"><span style="font-size: small;"><span style="color: #000080; font-weight: bold;">final double EPSILON</span> = <span style="color: #0000ff;">1e-6</span>;
+System.<span style="color: #660e7a; font-weight: bold; font-style: italic;">out</span>.println( Math.<span style="font-style: italic;">abs</span>(x-y*y)&lt;<span style="color: #000080; font-weight: bold;">EPSILON </span>? <span style="color: #008000; font-weight: bold;">"igual" </span>: <span style="color: #008000; font-weight: bold;">"diferente"</span>); </span><span style="color: #808080; font-style: italic;"><span style="font-size: small;">
+// igual</span></span></pre>
+</blockquote>
+<p>Outro ponto importante é que os floats e doubles tem um intervalo bastante pequeno para guardar números:</p>
+<blockquote>
+<pre style="color: #000000; font-family: Courier New; background-color: #ffffff;"><span style="color: #000080; font-weight: bold;"><span style="font-size: small;">float </span></span><span style="font-size: small;">f = <span style="color: #0000ff;">16777216</span>;
+System.<span style="color: #660e7a; font-weight: bold; font-style: italic;">out</span>.println(<span style="color: #008000; font-weight: bold;">"f = " </span>+ f + <span style="color: #008000; font-weight: bold;">", f+1 = " </span>+ f+<span style="color: #0000ff;">1</span>);</span><span style="color: #808080; font-style: italic;">
+<span style="font-size: small;">// f = 1.6777216E7, f+1 = 1.6777216E71</span></span></pre>
+</blockquote>
+<p>argh!!</p>
+<p>Como é possível que o erro seja tão catastrófico?&nbsp; 16777216 é 2<sup>24</sup> e a mantissa tem apenas 23 bits provocando um overflow.</p>
+<p>O mesmo ocorre para os doubles que têm 53 bits para a mantissa:</p>
+<blockquote>
+<pre style="color: #000000; font-family: Courier New; background-color: #ffffff;"><span style="color: #000080; font-weight: bold;"><span style="font-size: small;">double </span></span><span style="font-size: small;">dm = <span style="color: #0000ff;">9007199254740992L</span>; <span style="color: #808080; font-style: italic;">// 2^53
+</span>System.<span style="color: #660e7a; font-weight: bold; font-style: italic;">out</span>.println((dm+<span style="color: #0000ff;">1</span>) - dm);
+<span style="color: #808080; font-style: italic;">// 0.0</span></span></pre>
+</blockquote>
+<p>Este género de problemas também ocorre com números 'normais' quando multiplicados por quantidades muito pequenas:</p>
+<blockquote>
+<pre style="color: #000000; font-family: Courier New; background-color: #ffffff;"><span style="font-size: small;">System.<span style="color: #660e7a; font-weight: bold; font-style: italic;">out</span>.println(<span style="color: #0000ff;">1.0 </span>+ <span style="color: #008000; font-weight: bold;">" : " </span>+ (<span style="color: #0000ff;">1.0 </span>+ <span style="color: #0000ff;">0.5</span>*Double.<span style="color: #660e7a; font-weight: bold; font-style: italic;">MIN_VALUE</span>));
+</span><span style="color: #808080; font-style: italic;"><span style="font-size: small;">// 1.0 : 1.0</span></span></pre>
+</blockquote>
+<hr>
+<h3>Precisão e Correcção</h3>
+<p>Existe uma diferença entre o termo precisão (<i>precision</i>) e correcção (<i>accuracy</i>).</p>
+<p>Seja o número 3.14000001. A sua precisão é de oito casas decimais. 
+Mas a sua correcção depende do contexto. Se for uma estimativa de pi, a 
+sua correcção é de apenas duas casas decimais. Se o número for uma 
+estimativa de 31401/10000 a sua correcção é de três casas decimais.</p>
+<p>Como vimos nos exemplos anteriores, os valores representados nos 
+tipos float e double têm normalmente muitas casas de precisão, mas as 
+casas decimais correctas é um assunto completamente diferente.</p>
+<p>Mas mesmo a grande precisão dos tipos do Java pode não ser 
+suficiente. Pode acontecer que dois números diferentes sejam 
+considerados iguais porque ambos têm a mesma aproximação.</p>
+<p>O código</p>
+<blockquote>
+<pre style="color: #000000; font-family: Courier New; background-color: #ffffff;"><span style="font-size: small;">System.<span style="color: #660e7a; font-weight: bold; font-style: italic;">out</span>.println(<span style="color: #008000; font-weight: bold;">"0.9200000000000001 = " </span>+ <span style="color: #000080; font-weight: bold;">new </span>BigDecimal(<span style="color: #0000ff;">0.9200000000000001</span>));
+System.<span style="color: #660e7a; font-weight: bold; font-style: italic;">out</span>.println(<span style="color: #008000; font-weight: bold;">"0.9200000000000002 = " </span>+ <span style="color: #000080; font-weight: bold;">new </span>BigDecimal(<span style="color: #0000ff;">0.9200000000000002</span>));
+<span style="color: #000080; font-weight: bold;">boolean </span>b = (<span style="color: #0000ff;">0.9200000000000001 </span>== <span style="color: #0000ff;">0.9200000000000002</span>);
+System.<span style="color: #660e7a; font-weight: bold; font-style: italic;">out</span>.println(<span style="color: #008000; font-weight: bold;">"0.9200000000000001 == 0.9200000000000002: " </span>+ b);</span></pre>
+</blockquote>
+<p>produz o seguinte resultado:</p>
+<blockquote>
+<p><span style="font-family: Courier New; font-size: small;" size="2">0.9200000000000001 = 0.9200000000000001509903313490212894976139068603515625<br> 0.9200000000000002 = 0.9200000000000001509903313490212894976139068603515625<br> 0.9200000000000001 == 0.9200000000000002: true</span></p>
+</blockquote>
+<p>Precisamos de ter muito cuidado quando comparamos dois valores muito próximos.</p>
+<p>Mesmo a soma de valores simples traz-nos surpresas desagradáveis:</p>
+<blockquote>
+<pre style="color: #000000; font-family: Courier New; background-color: #ffffff;"><span style="font-size: small;">System.<span style="color: #660e7a; font-weight: bold; font-style: italic;">out</span>.println(<span style="color: #008000; font-weight: bold;">"0.1 = " </span>+ <span style="color: #0000ff;">0.1</span>);
+System.<span style="color: #660e7a; font-weight: bold; font-style: italic;">out</span>.println(<span style="color: #008000; font-weight: bold;">"0.1 = " </span>+ <span style="color: #000080; font-weight: bold;">new </span>BigDecimal(<span style="color: #0000ff;">0.1</span>));
+System.<span style="color: #660e7a; font-weight: bold; font-style: italic;">out</span>.println(<span style="color: #008000; font-weight: bold;">"0.2 = " </span>+ <span style="color: #000080; font-weight: bold;">new </span>BigDecimal(<span style="color: #0000ff;">0.2</span>));
+System.<span style="color: #660e7a; font-weight: bold; font-style: italic;">out</span>.println(<span style="color: #008000; font-weight: bold;">"0.3 = " </span>+ <span style="color: #000080; font-weight: bold;">new </span>BigDecimal(<span style="color: #0000ff;">0.3</span>));
+System.<span style="color: #660e7a; font-weight: bold; font-style: italic;">out</span>.println(<span style="color: #008000; font-weight: bold;">"0.4 = " </span>+ <span style="color: #000080; font-weight: bold;">new </span>BigDecimal(<span style="color: #0000ff;">0.4</span>));
+System.<span style="color: #660e7a; font-weight: bold; font-style: italic;">out</span>.println(<span style="color: #008000; font-weight: bold;">"0.1 + 0.2 = " </span>+ <span style="color: #000080; font-weight: bold;">new </span>BigDecimal(<span style="color: #0000ff;">0.1 </span>+ <span style="color: #0000ff;">0.2</span>));
+System.<span style="color: #660e7a; font-weight: bold; font-style: italic;">out</span>.println(<span style="color: #008000; font-weight: bold;">"0.1 + 0.3 = " </span>+ <span style="color: #000080; font-weight: bold;">new </span>BigDecimal(<span style="color: #0000ff;">0.1 </span>+ <span style="color: #0000ff;">0.3</span>));
+<span style="color: #000080; font-weight: bold;">boolean </span>b1 = (<span style="color: #0000ff;">0.1 </span>+ <span style="color: #0000ff;">0.2 </span>== <span style="color: #0000ff;">0.3</span>);
+System.<span style="color: #660e7a; font-weight: bold; font-style: italic;">out</span>.println(<span style="color: #008000; font-weight: bold;">"0.1 + 0.2 == 0.3: " </span>+ b1);</span></pre>
+</blockquote>
+<p>produz:</p>
+<blockquote>
+<p><span style="font-family: Courier New; font-size: small;" size="2">0.1 = 0.1<br> 0.1 = 0.1000000000000000055511151231257827021181583404541015625<br> 0.2 = 0.200000000000000011102230246251565404236316680908203125<br> 0.3 = 0.299999999999999988897769753748434595763683319091796875<br> 0.4 = 0.40000000000000002220446049250313080847263336181640625<br> 0.1 + 0.2 = 0.3000000000000000444089209850062616169452667236328125<br> 0.1 + 0.3 = 0.40000000000000002220446049250313080847263336181640625<br> 0.1 + 0.2 == 0.3: false</span></p>
+</blockquote>
+<p>Lidar correctamente com estes problemas está muito para além do 
+âmbito deste guião, sendo um assunto complexo tratado pela disciplina 
+científica da <a href="http://en.wikipedia.org/wiki/Numerical_analysis">Análise Numérica</a>.</p>
+<p>A soma e a subtração são mais perigosas que o produto e a divisão. 
+Isto porque podemos ter o azar de subtrair dois números muito similares,
+ o que pode implicar a perda total de precisão!</p>
+<p>Este próximo exemplo calcula a derivada do seno usando a definição <span style="font-family: Courier New; font-size: small;" size="2">(f(x+h) - f(x)) / h</span> quando <span style="font-family: Courier New; font-size: small;" size="2">h</span> tende para zero, e compara com o valor verdadeiro (a derivada do seno é o coseno):</p>
+<blockquote>
+<pre style="color: #000000; font-family: Courier New; background-color: #ffffff;"><span style="color: #000080; font-weight: bold;"><span style="font-size: small;">for </span></span><span style="font-size: small;">(<span style="color: #000080; font-weight: bold;">int </span>i = <span style="color: #0000ff;">1</span>; i &lt; <span style="color: #0000ff;">20</span>; ++i) {
+    <span style="color: #000080; font-weight: bold;">double </span>h = Math.<span style="font-style: italic;">pow</span>(<span style="color: #0000ff;">10.0</span>, -i);
+    System.<span style="color: #660e7a; font-weight: bold; font-style: italic;">out</span>.println( String.<span style="font-style: italic;">format</span>(<span style="color: #008000; font-weight: bold;">"%1.15f"</span>, (Math.<span style="font-style: italic;">sin</span>(<span style="color: #0000ff;">1.0</span>+h) - Math.<span style="font-style: italic;">sin</span>(<span style="color: #0000ff;">1.0</span>))/h));
+}
+System.<span style="color: #660e7a; font-weight: bold; font-style: italic;">out</span>.println(Math.<span style="font-style: italic;">cos</span>(<span style="color: #0000ff;">1.0</span>) + <span style="color: #008000; font-weight: bold;">"[True result]"</span>);</span></pre>
+</blockquote>
+<p>Os dígitos corretos estão sublinhados (assumindo arredondamentos):</p>
+<blockquote>
+<pre style="color: #000000; font-family: Courier New; background-color: #ffffff;"><span style="font-style: italic;"><span style="font-size: small;"> 0,<span style="text-decoration: underline;">4</span>97363752535389
+ 0,<span style="text-decoration: underline;">53</span>6085981011869
+ 0,<span style="text-decoration: underline;">53</span>9881480360327
+ 0,<span style="text-decoration: underline;">5402</span>60231418621
+ 0,<span style="text-decoration: underline;">5402</span>98098505865
+ 0,<span style="text-decoration: underline;">540301</span>885121330
+ 0,<span style="text-decoration: underline;">5403022</span>64040449
+ 0,<span style="text-decoration: underline;">5403023</span>02898255
+ 0,<span style="text-decoration: underline;">54030235</span>8409406
+ 0,<span style="text-decoration: underline;">540302</span>247387103
+ 0,<span style="text-decoration: underline;">54030</span>1137164079
+ 0,<span style="text-decoration: underline;">5403</span>45546085064
+ 0,<span style="text-decoration: underline;">53</span>9568389967826
+ 0,<span style="text-decoration: underline;">54</span>4009282066327
+ 0,<span style="text-decoration: underline;">5</span>55111512312578
+ 0,000000000000000
+ 0,000000000000000
+ 0,000000000000000
+ 0,000000000000000
+ 0.5403023058681398 [True Result]</span></span></pre>
+</blockquote>
+<p>A correção melhora à medida que h fica mais pequeno, como seria de se esperar. Mas a partir de h = 10<sup>-8</sup>, a correção começa a decair devido à subtração. A partir de h=10<sup>-16</sup> a perda de correção é total (dado que 1+h==h da perspectiva do Java).</p>
+<p>Se tiver que realizar muitas multiplicações pode correr o risco de 
+perder toda a correção por overflow ou underflow. Eg: calcular 200! / 
+(196! 4!) pelo método usual (o resultado certo é <a href="http://www.wolframalpha.com/input/?i=200%21+/+%28196%21+4%21%29">64684950</a>):</p>
+<blockquote>
+<pre style="background-color: #ffffff; color: #000000; font-family: 'Courier New';"><span style="color: #000080; font-weight: bold;"><span style="font-size: small;">static long </span></span><span style="font-size: small;">factorial(<span style="color: #000080; font-weight: bold;">int </span>n) {
+    <span style="color: #000080; font-weight: bold;">long </span>result=<span style="color: #0000ff;">1</span>;
+    <span style="color: #000080; font-weight: bold;">for </span>(<span style="color: #000080; font-weight: bold;">int </span>i=<span style="color: #0000ff;">1</span>; i&lt;=n; i++)
+        result += i;
+    <span style="color: #000080; font-weight: bold;">return </span>result;
+}</span></pre>
+<pre style="background-color: #ffffff; color: #000000; font-family: 'Courier New';"><span style="color: #000080; font-weight: bold;"><span style="font-size: small;">long </span></span><span style="font-size: small;">result = <span style="font-style: italic;">factorial</span>(<span style="color: #0000ff;">200</span>) / (<span style="font-style: italic;">factorial</span>(<span style="color: #0000ff;">196</span>)*<span style="font-style: italic;">factorial</span>(<span style="color: #0000ff;">4</span>));
+System.<span style="color: #660e7a; font-weight: bold; font-style: italic;">out</span>.println(result);</span></pre>
+</blockquote>
+<p>não funciona! Este código produz o valor zero.</p>
+<p>A forma tradicional de resolver este problema é transformar os 
+valores em logaritmos e somá-los. No fim, aplica-se o exponencial para 
+obter o resultado:</p>
+<blockquote>
+<pre style="color: #000000; font-family: Courier New; background-color: #ffffff;"><span style="color: #000080; font-weight: bold;"><span style="font-size: small;">static double </span></span><span style="font-size: small;">logFactorial(<span style="color: #000080; font-weight: bold;">int </span>n) {
+    <span style="color: #000080; font-weight: bold;">double </span>result=<span style="color: #0000ff;">0.0</span>;
+    <span style="color: #000080; font-weight: bold;">for </span>(<span style="color: #000080; font-weight: bold;">int </span>i=<span style="color: #0000ff;">1</span>; i&lt;=n; i++)
+        result += Math.<span style="font-style: italic;">log</span>((<span style="color: #000080; font-weight: bold;">double</span>)i);
+    <span style="color: #000080; font-weight: bold;">return </span>result;
+}</span></pre>
+<pre style="color: #000000; font-family: Courier New; background-color: #ffffff;"><span style="color: #000080; font-weight: bold;"><span style="font-size: small;">double </span></span><span style="font-size: small;">result2 = Math.<span style="font-style: italic;">exp</span>(<span style="font-style: italic;">logFactorial</span>(<span style="color: #0000ff;">200</span>) - (<span style="font-style: italic;">logFactorial</span>(<span style="color: #0000ff;">196</span>)+<span style="font-style: italic;">logFactorial</span>(<span style="color: #0000ff;">4</span>)));
+System.<span style="color: #660e7a; font-weight: bold; font-style: italic;">out</span>.println((<span style="color: #000080; font-weight: bold;">long</span>)result2);</span></pre>
+</blockquote>
+<p>produz 64684950. Mais info <a href="http://www.codeproject.com/Articles/25294/Avoiding-Overflow-Underflow-and-Loss-of-Precision"> aqui</a>.</p>
+<hr>
+<h3>Erro Absoluto e Erro Relativo</h3>
+<p>O erro absoluto é a diferença entre o valor exacto e a estimativa ou 
+aproximação. Por exemplo, se o valor exacto é 0.1 e a aproximação é 
+0.09, o erro absoluto é 0.1 - 0.09 = 0.01.</p>
+<p>O erro relativo é o erro absoluto a dividir pelo valor exacto. No 
+exemplo anterior, o erro relativo seria 0.01 / 0.1 = 0.1 ou 10%.</p>
+<p>Uma forma de colmatar, embora não resolvendo, os problemas de 
+aproximação -- quando lidamos com valores muito pequenos -- é usar o 
+erro relativo para comparar dois valores em vez de usar o erro absoluto.</p>
+<p>Um exemplo de uso. Seja o <a href="http://en.wikipedia.org/wiki/Newton%27s_method#Square_root_of_a_number">método de Newton</a> para calcular a raiz quadrada de um número. O seguinte código tenta implementar esse algoritmo:</p>
+<blockquote>
+<pre style="color: #000000; font-family: Courier New; background-color: #ffffff;"><span style="color: #000080; font-weight: bold;"><span style="font-size: small;">double </span></span><span style="font-size: small;">c = <span style="color: #0000ff;">4.0</span>;
+<span style="color: #000080; font-weight: bold;">double </span>EPSILON = <span style="color: #0000ff;">0.0</span>;
+<span style="color: #000080; font-weight: bold;">double </span>t = c;
+<span style="color: #000080; font-weight: bold;">while </span>(t*t - c &gt; EPSILON)
+    t = (c/t + t) / <span style="color: #0000ff;">2.0</span>;
+System.<span style="color: #660e7a; font-weight: bold; font-style: italic;">out</span>.print(t + <span style="color: #008000; font-weight: bold;">" e' raiz de " </span>+ c);</span></pre>
+</blockquote>
+<p>Se experimentarmos com alguns valores, o programa parece estar correcto:</p>
+<blockquote>
+<p><span style="font-family: Courier New; font-size: small;" size="2">2.0 e' raiz de 4.0<br> 1.414213562373095 e' raiz de 2<br> 3.162277660168379 e' raiz de 10</span></p>
+</blockquote>
+<p>Mas se tentarmos com c = 20.0, o ciclo não termina! Ocorre um 
+problema de aproximação porque o ciclo começa a lidar com números tão 
+pequenos que a sua soma não produz qualquer efeito (como, por exemplo, 
+1.0 + <span style="font-family: Symbol;">e = 1.0)</span>. No caso do double esse valor é 2<sup>-53</sup>.</p>
+<blockquote>
+<pre style="color: #000000; font-family: Courier New; background-color: #ffffff;"><span style="color: #000080; font-weight: bold;"><span style="font-size: small;">double </span></span><span style="font-size: small;"> d = <span style="color: #0000ff;">1.0 </span>/ (<span style="color: #0000ff;">1L </span>&lt;&lt; <span style="color: #0000ff;">53</span>);        <span style="color: #808080; font-style: italic;">// cf. operador <a href="http://www.erpgreat.com/java/java-bitwise-shift-operators.htm">&lt;&lt;</a>
+</span><span style="color: #000080; font-weight: bold;">boolean </span>b = (<span style="color: #0000ff;">1.0 </span>== (<span style="color: #0000ff;">1.0 </span>+ d));
+System.<span style="color: #660e7a; font-weight: bold; font-style: italic;">out</span>.println(<span style="color: #008000; font-weight: bold;">"1 + 2^-53 == 1: " </span>+ b);</span></pre>
+</blockquote>
+<p>produz:</p>
+<blockquote>
+<p><span style="font-family: Courier New; font-size: small;" size="2">1 + 2^-53 == 1: true</span></p>
+</blockquote>
+<p>Voltando ao exemplo, se convertermos o código para não comparar o erro absoluto</p>
+<p align="center"><span style="font-family: Courier New;">t*t - c &gt; c*EPSILON</span></p>
+<p>mas sim o erro relativo</p>
+<p align="center"><span style="font-family: Courier New;">Math.abs(t*t - c) &gt; c*EPSILON</span></p>
+<p>&nbsp;podemos resolver <i>este problema </i>em específico.</p>
+<blockquote>
+<pre style="color: #000000; font-family: Courier New; background-color: #ffffff;"><span style="color: #000080; font-weight: bold;"><span style="font-size: small;">double </span></span><span style="font-size: small;">c = <span style="color: #0000ff;">20.0</span>;
+<span style="color: #000080; font-weight: bold;">double </span>EPSILON = <span style="color: #0000ff;">1e-15</span>;
+<span style="color: #000080; font-weight: bold;">double </span>t = c;
+<span style="color: #000080; font-weight: bold;">while </span>(Math.<span style="font-style: italic;">abs</span>(t*t - c) &gt; c*EPSILON)
+    t = (c/t + t) / <span style="color: #0000ff;">2.0</span>;
+System.<span style="color: #660e7a; font-weight: bold; font-style: italic;">out</span>.print(t + <span style="color: #008000; font-weight: bold;">" e' raiz de " </span>+ c);</span></pre>
+</blockquote>
+<p>produz:</p>
+<blockquote>
+<p><span style="font-family: Courier New; font-size: small;" size="2">4.47213595499958 e' raiz de 20</span></p>
+</blockquote>
+<hr>
+<h3>Alguns Conselhos</h3>
+<p>Se puder, use inteiros e longs em vez de float e doubles.</p>
+<p>Se puder, use double em vez de float</p>
+<p>Use o erro relativo em vez de erro absoluto para comparar floats ou doubles. Não usar o ==.</p>
+<p>Se precisa de representar valores monetários, como cêntimos, use uma 
+variável inteira para o total em cêntimos. Quando for imprimir coloque a
+ vírgula após os dois primeiros dígitos. Pode fazer o mesmo para outras 
+unidades, como a temperatura.</p>
+<p>Cuidado quando uma operação sobre doubles é repetida muitas vezes. Se tem de somar, por exemplo, vários 0.01 a uma variável <span style="font-family: Courier New; font-size: small;" size="2">double d</span>, em vez de</p>
+<p><span style="font-family: Courier;">&nbsp;&nbsp;&nbsp; </span> <span style="font-family: Courier New; font-size: small;" size="2">d += 0.01</span></p>
+<p>use uma variável auxiliar inteira:</p>
+<blockquote>
+<p><span style="font-family: Courier New; font-size: small;" size="2">i++;<br> d = i * 0.01;</span></p>
+</blockquote>
+<p>As classes <span style="font-family: Courier New; font-size: small;" size="2">BigDecimal</span> e <span style="font-family: Courier New; font-size: small;" size="2">BigInteger</span> fornecem valores fraccionais e inteiros de <i>precisão</i> arbitrária.</p>
+<p>Cuidado a subtrair valores muito similares e a somar valores de magnitudes muito diferentes.</p>
+<h3>Referências</h3>
+<ul>
+<li><a href="http://mindprod.com/jgloss/floatingpoint.html">Floating Point : Java Glossary</a></li>
+<li><a href="http://www.codeproject.com/Articles/25294/Avoiding-Overflow-Underflow-and-Loss-of-Precision"> Avoiding Overflow, Underflow, and Loss of Precision</a>, John D Cook</li>
+<li><a href="http://blog.csdn.net/jierui001/article/details/3278382">Java Floating-Point Number Intricacies</a>, Thomas Wang</li>
+<li><a href="https://codewords.recurse.com/issues/one/when-is-equality-transitive-and-other-floating-point-curiosities"> When is equality transitive? and other floating point curiosities</a>, Dan Luu</li>
+<li>Programming in Java, <a href="http://introcs.cs.princeton.edu/java/91float/">Section 9.1</a>, Robert Sedgewick and Kevin Wayne</li>
+<li><a href="https://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html">What Every Computer Programmer Should Know About Floating-Point Arithmetic</a>, David Goldberg [avançado]</li>
+</ul></div></div><div class="modified">Last modified: Friday, 11 November 2016, 11:31 PM</div>
+
+
+</body>
+</html>
