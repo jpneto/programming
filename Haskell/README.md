@@ -1,3 +1,3 @@
 # programming
 
-Haskell stuff (?)
+Haskell stuff
