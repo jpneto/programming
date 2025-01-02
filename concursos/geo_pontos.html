@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=yes">
+  <meta name="description" content="How to use computational geometry">
+  <script type="text/javascript" id="MathJax-script" async
+         src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>  
+  <title>Geometria Computacional - Pontos</title>
+</head>
+
+<body>
+
+<h1 style="text-align: center;">Geometria Computacional - Pontos</h1>
+<center><span style="font-size: small;"><em>João Pedro Neto</em></span></center>
+
+<p style="font-size: small;">O elemento geométrico mais simples é o <strong>ponto</strong>.</p>
+
+<p>A nossa classe começa desta forma:</p>
+
+<blockquote><pre><code>
+import java.util.*;
+import static java.lang.Math.*;
+
+class Point {
+  public static final double EPSILON = 1e-7;
+  public double x,y;
+
+  public Point(double x, double y)        { this.x=x; this.y=y; }
+  public String toString()                { return "(" + x + "," + y + ")"; }  
+</code></pre></blockquote>
+
+<p>Vamos sempre usar <em>doubles</em>. Os <em>floats</em> devem evitar-se por haver muitos problemas de precisão. Eventualmente poderão ser precisos se houver necessidade de poupar memória, mas isso deve ocorrer muito raramente.</p>
+<p>A constante EPSILON irá servir para comparar <em>doubles</em>, já que se deve evitar usar o == para o efeito. O seu valor poderá ter de ser menor, consoante o contexto do vosso problema.</p>
+<p>Quando se importa uma classe de forma <code>static</code>, como fizemos para o <code>Math</code>, podemos usar os seus métodos diretamente. Eg, <code>sqrt()</code> em vez de <code>Math.sqrt()</code>.</p>
+
+<p>Alguns métodos úteis:</p>
+
+<blockquote><pre><code>
+class Point {
+  ...
+  public static double hypot(double x, double y) { return sqrt(x*x+y*y);      }  
+  public static boolean eq(double a, double b)   { return abs(a-b) &lt; EPSILON; }
+
+  public static double deg2rad(double degree)    { return degree * PI/180.0;  }
+  public static double rad2deg(double rad)       { return rad * 180.0/PI;     }
+
+  public boolean equals(Point p)          { return eq(x,p.x) && eq(y,p.y);  }
+  public double distance(Point p)         { return hypot(x-p.x,y-p.y);      }
+</code></pre></blockquote>
+
+<p>O método hypot() devolve a distância à origem, o eq() compara dois doubles para ver se são iguais. O resto é auto-explicativo.</p>
+
+<p>O próximo método devolve um novo ponto que corresponde à rotação do ponto um número de graus em relação à origem. Internamente ele converte para radianos, antes de fazer o cálculo trigonométrico:</p>
+
+<blockquote><pre><code>
+public Point rotate(double rad) {    // rotate wrt origin (in radians)
+    return new Point(x*cos(rad)-y*sin(rad), x*sin(rad)+y*cos(rad));
+}
+</code></pre></blockquote>
+
+<p>Essencialmente está-se a multiplicar o vector [x y]<sup>T  </sup>pela matrix de rotação. Detalhes <a href="https://en.wikipedia.org/wiki/Rotation_%28mathematics%29#Two_dimensions" target="_blank">aqui</a>.</p>
+
+<p>Os próximos métodos precisam da noção de vector. Assim, antes de continuar, vamos criar uma outra classe <strong>Vector</strong> com os métodos típicos de operações de e com vectores:</p>
+
+<blockquote><pre><code>
+class Vector {
+  public double x,y;
+  
+  public Vector(double x, double y) { this.x = x;         this.y = y;         }
+  public Vector(Point a, Point b)   { this.x = b.x - a.x; this.y = b.y - a.y; }
+  
+  public Vector scale(double s)     { return new Vector(x*s,y*s);    }
+  public Point  translate(Point p)  { return new Point(x+p.x,y+p.y); }
+  
+  public double dot(Vector v)       { return x*v.x + y*v.y; }  // dot product
+  public double norm_sq()           { return x*x   + y*y;   }  // square of vector's norm
+  public double cross(Vector v)     { return x*v.y - y*v.x; }  // cross product
+}
+</code></pre></blockquote>
+
+<p>Voltemos à classe <code>Point</code>:</p>
+
+<p>O próximo método verifica se três pontos são colineares:</p>
+
+<blockquote><pre><code>
+public static boolean collinear(Point p, Point q, Point r) {
+    return Math.abs(new Vector(p,q).cross(new Vector(p, r))) &lt; EPSILON;
+}
+</code></pre></blockquote>
+
+<p>ou seja, três pontos A, B, C são colineares se o produto externo dos vectores dados por AB e AC é zero. Isto verifica-se já que o produto externo devolve o vector prependicular aos dois originais, com a dimensão dada pela área do paralelogramo definido por esses dois vectores. Se eles estiverem na mesma linha, essa área é zero!</p>
+
+<p style="text-align: center;"><img src="imgs/geom_cross_product.png" width="176" height="138" /></p>
+
+<p>O seguinte usa igualmente o produto externo para verificar se os três pontos fazem uma curva para a esquerda (counter-clockwise) ou não. O sinal do produto externo dá-nos essa informação. Informalmente, usamos a regra da mão direita:</p>
+
+<p style="text-align: center;"><img src="imgs/geom_righthand.png" width="335" height="202" /></p>
+
+<blockquote><pre><code>
+// counterclockwise: if a -> b -> c makes a left turn 
+// if == 0 they are colinear, if negative they make a right turn (clockwise)
+public static boolean ccw(Point a, Point b, Point c) {
+    Vector ab = new Vector(a,b),
+           ac = new Vector(a,c);
+    return ab.cross(ac) > 0;
+}
+</code></pre></blockquote>
+
+<p>O seguinte método devolve o ângulo de dois segmentos definido por três pontos:</p>
+
+<p><img src="imgs/geom_angle_3pts.png" style="display: block; margin-left: auto; margin-right: auto;" width="211" height="142" /></p>
+
+<blockquote><pre><code>
+// angle between the three points, o is the middle point
+public static double angle(Point a, Point o, Point b) {
+    Vector oa = new Vector(o,a),
+           ob = new Vector(o,b);
+    return acos(oa.dot(ob) / sqrt(oa.norm_sq()*ob.norm_sq()));
+}
+</code></pre></blockquote>
+
+<p>O código expressa a equação</p>
+
+$$ \theta = \arccos \left( \frac{\vec{AB}\cdot \vec{BC}}{ \|\vec{AB}\| \, \|\vec{BC}\|}\right) $$
+
+
+<p>Há poucos problemas que se conseguem resolver apenas com pontos, mas um deles é o <a href="https://uva.onlinejudge.org/index.php?option=onlinejudge&amp;page=show_problem&amp;problem=528" target="_blank">UVa 587</a>. Leiam o enunciado e tentem fazê-lo!</p>
+<p></p>
+<hr />
+<p>O resto deste guião foca um problema mais complexo.</p>
+
+<p>Dado n pontos, qual o par de pontos que se encontra mais perto? Este problema tem uma solução trivial em O(n<sup>2</sup>), basta calcular as distâncias de todos os pares e devolver o mínimo.</p>
+
+<p>Mas é possível fazer em O(n.log n). O algoritmo usa uma técnica de <em>divide and conquer</em> e está explicado aqui <a href="https://en.wikipedia.org/wiki/Closest_pair_of_points_problem" target="_blank">https://en.wikipedia.org/wiki/Closest_pair_of_points_problem</a></p>
+
+<p>O código correspondente em Java (adaptado <a href="http://algs4.cs.princeton.edu/99hull/ClosestPair.java.html" target="_blank">daqui</a>):</p>
+
+<blockquote><pre><code>
+static double bestDistance;
+static Point best1, best2;
+
+public static Point[] closestPoints(Point[] ps) {
+    int n = ps.length;
+    if (n &lt;= 1) return null;
+
+    Point[] pointsByX = new Point[n];
+    for (int i=0; i&lt;n; i++)
+        pointsByX[i] = ps[i];
+    Arrays.sort(pointsByX, (Point p1, Point p2) -> {
+        if (p1.x > p2.x) return (int)1;  // sort by x-coordinate (breaking ties by y-coordinate)
+        if (p1.x &lt; p2.x) return (int)-1;
+        return (int)round(p1.y-p2.y);
+    });
+
+    // check for coincident points (bestDistance == 0)
+    for(int i=0; i&lt;n-1; i++)
+        if (pointsByX[i].equals(pointsByX[i+1]))
+            return new Point[] {pointsByX[i], pointsByX[i+1]};
+
+    Point[] pointsByY = new Point[n];  // sort by y-coordinate (but not yet sorted)
+    for(int i=0; i&lt;n; i++)
+        pointsByY[i] = pointsByX[i];
+
+    bestDistance = Double.POSITIVE_INFINITY;
+    Point[] aux = new Point[n];
+    closest(pointsByX, pointsByY, aux, 0, n-1);
+    return new Point[] {best1, best2};
+}
+
+// find closest pair of points in pointsByX[lo..hi]
+// precondition:  pointsByX[lo..hi] and pointsByY[lo..hi] are the same sequence of points
+// precondition:  pointsByX[lo..hi] sorted by x-coordinate
+// postcondition: pointsByY[lo..hi] sorted by y-coordinate
+private static double closest(Point[] pointsByX, Point[] pointsByY, Point[] aux, int lo, int hi) {
+    if (hi &lt;= lo) return Double.POSITIVE_INFINITY;
+
+    int mid = lo + (hi - lo) / 2;
+    Point median = pointsByX[mid];
+
+    // compute closest pair with both endpoints in left subarray or both in right subarray
+    double delta1 = closest(pointsByX, pointsByY, aux, lo,    mid);
+    double delta2 = closest(pointsByX, pointsByY, aux, mid+1, hi);
+    double delta = min(delta1, delta2);
+
+    // merge back so that pointsByY[lo..hi] are sorted by y-coordinate
+    merge(pointsByY, aux, lo, mid, hi);
+
+    // aux[0..m-1] = sequence of points closer than delta, sorted by y-coordinate
+    int m = 0;
+    for (int i = lo; i &lt;= hi; i++)
+        if (abs(pointsByY[i].x - median.x) &lt; delta)
+            aux[m++] = pointsByY[i];
+
+    // compare each point to its neighbors with y-coordinate closer than delta
+    for (int i = 0; i &lt; m; i++) {
+        // a geometric packing argument shows that this loop iterates at most 7 times
+        for (int j = i+1; (j &lt; m) && (aux[j].y - aux[i].y &lt; delta); j++) {
+            double distance = aux[i].distance(aux[j]);
+            if (distance &lt; delta) {
+                delta = distance;
+                if (distance &lt; bestDistance) {
+                    bestDistance = delta;
+                    best1 = aux[i];
+                    best2 = aux[j];
+                }
+            }
+        }
+    }
+    return delta;
+}
+
+// stably merge a[lo .. mid] with a[mid+1 ..hi] using aux[lo .. hi]
+// precondition: a[lo .. mid] and a[mid+1 .. hi] are sorted subarrays
+private static void merge(Point[] a, Point[] aux, int lo, int mid, int hi) {
+    for (int k = lo; k &lt;= hi; k++)
+        aux[k] = a[k];
+    // merge back to a[]
+    int i = lo, j = mid+1;
+    for (int k = lo; k &lt;= hi; k++) {
+        if      (i > mid)                    a[k] = aux[j++];
+        else if (j > hi)                     a[k] = aux[i++];
+        else if (compareTo(aux[j],aux[i])&lt;0) a[k] = aux[j++];
+        else                                 a[k] = aux[i++];
+    }
+}
+
+private static int compareTo(Point p1, Point p2) {
+    if (p1.y &lt; p2.y) return -1;
+    if (p1.y > p2.y) return +1;
+    if (p1.x &lt; p2.x) return -1;
+    if (p1.x > p2.x) return +1;
+    return 0;
+}
+</code></pre></blockquote>
+
+<div class="modified">Last modified: Wednesday, 22 February 2017, 3:42 PM</div>
+
+</body>
+</html>
