@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=yes">
+  <meta name="description" content="How to use computational geometry">
+  <script type="text/javascript" id="MathJax-script" async
+         src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>  
+  <title>Geometria Computacional - Triângulos</title>
+</head>
+
+<body>
+
+<h1 style="text-align: center;">Geometria Computacional - Triângulos</h1>
+<center><span style="font-size: small;"><em>João Pedro Neto</em></span></center>
+
+<p>O triângulo é outra figura geométrica básica e que possui imensas aplicações.</p>
+
+<p>Existem várias formas de especificar um triângulo. Definir os seus vértices, os seus ângulos ou, sem associação a coordenadas, definir a dimensão dos seus lados.</p>
+
+<p>A classe seguinte opta por ter duas representações mutuamente exclusivas, uma definida pelos seus vértices e outra pela dimensão dos seus lados. Assim, consoante a informação disponível no problema, podemos construir um triângulo adequado. Para tal, haverá um atributo booleano que nos informa qual a representação de um dado objeto:</p>
+
+<blockquote><pre><code>
+class Triangle {
+  
+  Point  A, B, C;   // defined by points
+  double a, b, c;   // defined by sizes (no fixed reference) 
+  boolean byPoints; // informs which representation we are using
+  
+  public Triangle(double a, double b, double c) {
+    this.a=a; this.b=b; this.c=c; byPoints=false;
+  }
+
+  public Triangle(Point a, Point b, Point c) {
+    this.A=a; this.B=b; this.C=c; byPoints=true;
+  }
+  
+  public static double area(double a, double b, double c) { // Heron's formula
+    double s = (a+b+c)/2.0;             // semi-perimeter
+    return sqrt(s*(s-a)*(s-b)*(s-c));
+  }
+
+  // another method: https://www.futilitycloset.com/2018/09/07/neat-3/
+  public static double area(Point p1, Point p2, Point p3) {
+    return area(p1.distance(p2), p2.distance(p3), p3.distance(p1));
+  }
+
+  public double area() { return byPoints ? area(A,B,C) : area(a,b,c);  }
+
+  public static double perimeter(Point p1, Point p2, Point p3) {
+    return p1.distance(p2) + p2.distance(p3) + p3.distance(p1);
+  }
+
+  public double perimeter() {
+    return byPoints ? perimeter(A,B,C) : a+b+c;
+  }
+</code></pre></blockquote>
+
+<p>O próximo método devolve o círculo inscrito num triângulo:</p>
+
+<p style="text-align: center;"><img src="imgs/geom_incircle.png" width="244" height="168" /></p>
+
+<p style="text-align: left;">Este círculo pode ser descoberto pela intersecção de <a class="autolink" title="Linhas" href="https://moodle.ciencias.ulisboa.pt/mod/page/view.php?id=113909">linhas</a> que bisectam os ângulos do triângulo [<a href="https://en.wikipedia.org/wiki/Incircle_and_excircles_of_a_triangle#Incircle" target="_blank">ref</a>]:</p>
+
+<blockquote><pre><code>
+// returns the triangle's incircle
+public Circle inCircle() {
+    if (!byPoints) return null;
+    
+    Line angleBisector1 = Line.angleBisector(A, B, C),
+         angleBisector2 = Line.angleBisector(B, A, C);
+    
+    Point center  = angleBisector1.intersect(angleBisector2);
+    double radius = Triangle.area(A, B, C) / (0.5*Triangle.perimeter(A, B, C));
+    return new Circle(center, radius);
+}
+</code></pre></blockquote>
+    
+<p>Também podemos calcular o círculo que inscreve o triângulo.</p>
+
+<p style="text-align: center;"><img src="imgs/geom_outcircle.gif" width="151" height="145" /></p>
+
+<p style="text-align: left;">Este centro é a intersecção dos bisectores dos lados dos triângulos (o raio possui uma fórmula direta, cf <a href="http://www.efunda.com/math/areas/triangleinscribedcirclegen.cfm" target="_blank">aqui</a>)</p>
+
+<blockquote><pre><code>
+// returns the triangle's outcircle
+public Circle outCircle() {
+    if (!byPoints) return null;
+    
+    Line b1 = Line.bisector(A, B),
+         b2 = Line.bisector(B, C);
+    
+    Point center  = b1.intersect(b2); 
+    double radius = A.distance(B)*B.distance(C)*C.distance(A) / (4*Triangle.area(A, B, C));
+    return new Circle(center, radius);
+}
+</code></pre></blockquote>
+
+<p>De notar que só podemos devolver estes círculos quando trabalhamos com a representação do triângulo por vértices.</p>
+
+<p>Se tivermos só os lados, apenas podemos conhecer o raio destes círculos:</p>
+
+<blockquote><pre><code>
+// returns the triangle's incircle radius (if we just know the sizes)
+// @pre: !byPoints
+public double radiusInCircle() {
+    return Triangle.area(a, b, c) / (0.5*(a+b+c));
+}
+
+// returns the triangle's outcircle radius (if we just know the sizes)
+// @pre: !byPoints
+public double radiusOutCircle() {
+    return a*b*c / (4*Triangle.area(a, b, c));
+}
+</code></pre></blockquote>
+
+<p>Outro método útil é saber quais os ângulos do triângulo. Se tivermos apenas os lados, os ângulos podem ser calculados pelas <a href="https://www.mathsisfun.com/algebra/trig-cosine-law.html" target="_blank">leis dos cosenos</a>.</p>
+
+<blockquote><pre><code>
+// return array of the triangle angles in radian
+// to translate to degree use: 
+//   Arrays.stream(t.angles()).map(rad -> rad*180.0/PI).toArray();
+public double[] angles() {
+    if (byPoints)
+        return new double[] {Point.angle(C,A,B), Point.angle(A,B,C),Point.angle(B,C,A)};
+    else {
+        double a2=a*a, b2=b*b, c2=c*c; 
+        return new double[] {acos((b2+c2-a2)/(2*b*c)),
+                             acos((c2+a2-b2)/(2*a*c)),
+                             acos((a2+b2-c2)/(2*a*b))};
+    }
+}
+</code></pre></blockquote>
+
+<p>Uma nota sobre o método de cálculo da área. A fórmula de Heron é muito conhecida e matematicamente correta. Porém, no mundo dos <em>double's</em> esta fórmula levanta problemas de aproximação no caso de triângulos muito finos, onde dois lados são muito maiores que outro. Isto porque o semi-perímetro s vai ser muito similar aos dois lados maiores, e a subtracção de dois números muito similares pode levar a perda catastrófica de precisão (cf. o <a href="https://moodle.ciencias.ulisboa.pt/mod/page/view.php?id=113889">tutorial sobre este assunto</a>).</p>
+
+<p>Nesta situação, deve-se substituir por uma fórmula equivalente mais estável. A seguinte foi criada por <a href="https://www.johndcook.com/blog/2020/02/27/numerical-heron/">William Kahan</a> (devem respeitar os parenteses):</p>
+
+$$A = \frac{1}{4} \sqrt{(a+(b+c))(c-(a-b))(c+(a-b))(a+(b-c))}$$
+
+<hr />
+
+<p>Problemas UVas sugeridos:</p>
+<ul>
+<li><a href="https://uva.onlinejudge.org/index.php?option=onlinejudge&amp;page=show_problem&amp;problem=126" target="_blank">UVa 00190 - Circle Through Three Points</a></li>
+<li><a href="https://uva.onlinejudge.org/index.php?option=onlinejudge&amp;page=show_problem&amp;problem=1136" target="_blank">UVa 10195 - The Knights Of The Round Table</a></li>
+<li><a href="https://uva.onlinejudge.org/index.php?option=onlinejudge&amp;page=show_problem&amp;problem=1518" target="_blank">UVa 10577 - Bounding box</a></li>
+<li><a href="https://uva.onlinejudge.org/index.php?option=onlinejudge&amp;page=show_problem&amp;problem=2093" target="_blank">UVa 11152 - Colourful Flowers</a></li>
+<li><a href="https://uva.onlinejudge.org/index.php?option=com_onlinejudge&amp;Itemid=8&amp;page=show_problem&amp;problem=3060" target="_blank">UVa 11909 - Soya Milk</a></li>
+</ul>
+
+<div class="modified">Last modified: Friday, 28 February 2020, 8:51 AM</div>
+
+</body>
+</html>

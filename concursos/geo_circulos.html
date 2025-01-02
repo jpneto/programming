@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=yes">
+  <meta name="description" content="How to use computational geometry">
+  <script type="text/javascript" id="MathJax-script" async
+         src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>  
+  <title>Geometria Computacional - Círculos</title>
+</head>
+
+<body>
+
+<h1 style="text-align: center;">Geometria Computacional - Círculos</h1>
+<center><span style="font-size: small;"><em>João Pedro Neto</em></span></center>
+
+<p>Os círculos são objectos simples, são definidos pelo ponto central e pelo seu raio.</p>
+<p>A classe tem dois construtores, um que recebe estes parametros e outro que recebe três pontos na sua circunferência.</p>
+<p>Três pontos na circunferência são suficientes para definir um círculo: basta calcular os bisectores das duas cordas definidas pelos três pontos, sendo o centro do círculo a intersecção destes dois bisectores.</p>
+<p style="text-align: center;"><img src="imgs/geom_circle_3points.gif" width="181" height="170" /></p>
+<p>A classe:</p>
+
+<blockquote><pre><code>
+class Circle {
+
+  public Point c;   // center
+  public double r;  // radius
+  
+  public Circle(Point center, double radius) { c = center; r = radius; }
+  
+  // intersect the two bisectors of lines p1p2 and p2p3: that's the circle's center
+  public Circle(Point p1, Point p2, Point p3) {
+    Line b1 = Line.bisector(p1, p2),
+       b2 = Line.bisector(p2, p3);
+    c = b1.intersect(b2);
+    r = c.distance(p1);
+  }
+</code></pre></blockquote>
+    
+<p>Os seguintes métodos devolvem valores de várias propriedades do círculo:</p>
+
+
+<p style="text-align: center;"><img src="imgs/geom_circle_defs.gif" width="208" height="211" /></p>
+<p style="text-align: center;"><em>arco (s), corda (a), área segmento (zona a amarelo) dependem do ângulo <span class="nolink">\(\theta\)</span> </em>[<a href="http://mathworld.wolfram.com/CircularSegment.html" target="_blank">ref</a>]</p>
+
+<blockquote><pre><code>
+public double diameter()  { return 2*r; }
+public double perimeter() { return 2*PI*r; }
+public double area()	  { return PI*r*r; }
+
+public double lengthArc (double rad) { return perimeter() * rad/(2*PI); }
+public double lengthCord(double rad) { return 2*r*sin(rad/2.0); }
+
+// Segment of a circle is defined as a region of the circle enclosed by a chord 
+// and an arc lying between the chord’s endpoints
+public double areaSegment(double rad) {
+     return r*r/2 * (rad - sin(rad)); 
+}
+</code></pre></blockquote>
+
+<p>O próximo método devolve a interseção de uma recta com o círculo. Este resultado vem num array de pontos (dado que a intersecção pode ser numa tangente ou numa corda) ou devolve null se não existir intersecção. Mais detalhes <a href="http://mathworld.wolfram.com/Circle-LineIntersection.html" target="_blank">aqui</a>.</p>
+
+<p style="text-align: center;"><img src="imgs/geom_circle_line.gif" width="533" height="144" /></p>
+
+<blockquote><pre><code>
+// the array of points (1 or 2) that are the intersection of the circle with line m
+// if no intersect, it returns null
+public Point[] intersect(Line m) {
+    double d = sqrt(m.a*m.a + m.b*m.b);
+    Line n = new Line(m.a/d, m.b/d, m.c/d);
+    double e = -n.c - n.a*c.x - n.b*c.y,
+           h = sqrt(r*r - e*e);
+    if (r&lt;e)  return null;
+    if (h==0) return new Point[] {new Point(c.x + n.a*e, c.y + n.b*e)};
+    return new Point[] {new Point(c.x + n.a*e - h*n.b, c.y + n.b*e + h*n.a),
+                        new Point(c.x + n.a*e + h*n.b, c.y + n.b*e - h*n.a)};		
+}
+</code></pre></blockquote>
+
+
+<p>Também está implementada a intersecção com outro círculo [<a href="http://mathworld.wolfram.com/Circle-CircleIntersection.html" target="_blank">ref</a>]:</p>
+
+<blockquote><pre><code>
+// the array of points (1 or 2) that are the intersection of the circle with circle c2
+// if equal or no intersect, it returns null
+// ref: https://sites.google.com/site/indy256/algo/geometry_circle
+public Point[] intersect(Circle c2) {
+    if (Point.hypot(c.x - c2.c.x, c.y - c2.c.y) &lt; Point.EPSILON)  // if same center
+        return null;
+
+    double dx = c2.c.x - c.x;
+    double dy = c2.c.y - c.y;
+    double A = -2 * dx;
+    double B = -2 * dy;
+    double C = dx * dx + dy * dy + r * r - c2.r * c2.r;
+    Point[] res = new Circle(new Point(0,0), r).intersect(new Line(A, B, C));
+    for (Point p : res) {
+        p.x += c.x;
+        p.y += c.y;
+    }
+    return res;
+}
+</code></pre></blockquote>
+
+
+<p>O método seguinte devolve a área da intersecção de dois círculos [<a href="http://mathworld.wolfram.com/Circle-CircleIntersection.html" target="_blank">ref</a>]:</p>
+
+<p style="text-align: center;"><img src="imgs/geom_circle_circle_intersection.gif" width="216" height="156" /></p>
+
+<blockquote><pre><code>
+// ref: https://sites.google.com/site/indy256/algo/geometry_circle
+public double circleIntersectionArea(Circle c2) {
+    double r = min(this.r, c2.r);
+    double R = max(this.r, c2.r);
+    double d = Point.hypot(c.x - c2.c.x, c.y - c2.c.y);
+    if (d < R - r + Point.EPSILON) return PI * r * r;  // same circle
+    if (d > R + r - Point.EPSILON) return 0;           // no intersection
+    return  r * r * acos((d * d + r * r - R * R) / 2 / d / r) + R * R
+            * acos((d * d + R * R - r * r) / 2 / d / R) - 0.5
+            * sqrt((-d + r + R) * (d + r - R) * (d - r + R) * (d + r + R));
+}
+</code></pre></blockquote>    
+
+
+<p>Uma forma alternativa de (quase) especificar um círculo é dar o raio e dois pontos na circunferência. O quase é porque com esta informação há dois círculos possíveis de encontrar:</p>
+
+<p style="text-align: center;"><img src="imgs/geom_2points_radius.gif" width="262" height="164" /></p>
+
+<blockquote><pre><code>
+// this returns one of two possible centers, given a radius and two points 
+// on the circle (to get the other option, reverse the order of the points)
+public static Point centerGiven(Point p1, Point p2, double radius) {
+    double d2 = (p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y);
+    double det = radius * radius / d2 - 0.25;
+    if (det &lt; 0.0) return null;
+    double h = sqrt(det);
+    return new Point((p1.x + p2.x) * 0.5 + (p1.y - p2.y) * h,
+                     (p1.y + p2.y) * 0.5 + (p2.x - p1.x) * h);
+}
+</code></pre></blockquote>
+
+<p>O próximo método devolve os dois pontos que tocam nas tangentes de um ponto a um círculo (se o ponto estiver na circunferência, devolve-se a si, e se estiver dentro do círculo devolve null):</p>
+<p><img src="imgs/geom_circle_tangents.png" style="display: block; margin-left: auto; margin-right: auto;" width="336" height="178" /></p>
+
+<blockquote><pre><code>
+// returns the two points both on the circumference and in the tangent line from p
+// null if p is inside circle, or just one point if p is in the circumference
+public Point[] tangents(Point p) {
+    if (c.distance(p) - r &lt;  Point.EPSILON) return new Point[] { p };
+    if (c.distance(p) &lt; r) return null;
+
+    double dx = c.x - p.x,
+           dy = c.y - p.y,
+           dd = sqrt(dx*dx + dy*dy),
+           a  = asin(r/dd),
+           b  = atan2(dy,dx);
+
+    return new Point[] { new Point(r *  sin(b-a), r * -cos(b-a)),
+                         new Point(r * -sin(b+a), r *  cos(b+a)) };
+}
+</code></pre></blockquote>	
+
+
+<hr />
+
+<p>Com este material vamos resolver UVas! Sugestões:</p>
+<ul>
+<li><a href="https://uva.onlinejudge.org/index.php?option=onlinejudge&amp;page=show_problem&amp;problem=946" target="_blank">UVa 10005 - Packing polygons</a></li>
+<li><a href="https://uva.onlinejudge.org/index.php?option=onlinejudge&amp;page=show_problem&amp;problem=1121" target="_blank">UVa 10180 - Rope Crisis in Ropeland</a></li>
+<li><a href="https://uva.onlinejudge.org/index.php?option=onlinejudge&amp;page=show_problem&amp;problem=1162" target="_blank">UVa 10221 - Satellites</a></li>
+<li><a href="https://uva.onlinejudge.org/index.php?option=onlinejudge&amp;page=show_problem&amp;problem=1530" target="_blank">UVa 10589 - Area</a></li>
+</ul>
+
+<div class="modified">Last modified: Thursday, 9 March 2017, 8:53 PM</div></div>
+
+</body>
+</html>

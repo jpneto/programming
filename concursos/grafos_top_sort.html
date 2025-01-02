@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=yes">
+  <meta name="description" content="How to use graphs">
+  <title>Grafos - Ordenação Topológica</title>
+</head>
+
+<body>
+
+<h1 style="text-align: center;">Grafos - Ordenação Topológica</h1>
+<center><span style="font-size: small;"><em>João Pedro Neto</em></span></center>
+
+<p>A <strong>ordenação topológica</strong> (em inglês, <em>topological sort</em>) é uma ordenação linear de um dag (<em>direct acyclic graph</em>, i.e., grafo orientado sem ciclos) onde cada nó não aparece antes dos seus antecessores.</p>
+<p>Um exemplo: seja o seguinte dag (<a href="https://pt.wikipedia.org/wiki/Ordena%C3%A7%C3%A3o_topol%C3%B3gica">ref</a>)</p>
+<p style="text-align: center;"><img src="imgs/graph_dag_eg.png" width="180" height="160" /></p>
+<p>neste caso, existem várias ordenações topológicas possíveis:</p>
+<ul>
+<li>3, 7, 8, 5, 11, 10, 2, 9</li>
+<li>5, 7, 3, 8, 11, 10, 9, 2 </li>
+<li>7, 5, 11, 2, 3, 8, 9, 10</li>
+<li>...</li>
+</ul>
+<p>É possível que, num dado problema, exista um critério extra que admite apenas uma ordenação.</p>
+<p>Por exemplo, se exigirmos que nós com identificadores menores sejam ordenados primeiro, existe apenas uma solução:</p>
+<ul>
+<li>3, 5, 7, 8, 11, 2, 9, 10</li>
+</ul>
+<h4>Um algoritmo</h4>
+<p>Para devolver uma ordenação topológica genérica (i.e., sem critérios extra) devemos repetir o processo seguinte:</p>
+<p>  Enquanto houver nós:</p>
+<ol>
+<li>Encontrar um nó que não tenha antecessores,</li>
+<li>Juntá-lo à ordenação</li>
+<li>Removê-lo do grafo (convém trabalhar com uma cópia da estrutura de dados, para não mexermos no original)</li>
+</ol>
+<p>A complexidade é dada por O(V+E) sendo V o número de nós e E o número de arestas.</p>
+<h4>Classe GraphMatrix</h4>
+<p>Vamos implementar este algoritmo usando os serviços da classe <strong>GraphMatrix</strong> discutida nos tutoriais anteriores.</p>
+<p>Primeiro a função auxiliar seguinte permite encontrar e isolar um nó sem antecessores. </p>
+<p>Aqui assumimos que o grafo é sempre um dag:</p>
+<pre style="background-color: #ffffff; color: #000000; font-family: 'Courier New'; margin-left: 30px;"><span style="font-size: small;"><span style="color: #000080; font-weight: bold;">private boolean</span>[] <span style="color: #660e7a; font-weight: bold;">deactivated</span>;  <span style="color: #808080; font-style: italic;">// vector useful for topSort<br /></span><span style="color: #808080; font-style: italic;"><br /></span><span style="color: #808080; font-style: italic;">// get the index of a node with no in-edges (for topSort)<br /></span><span style="color: #808080; font-style: italic;">// returns -1 if no such node found (ie, a cycle exists)<br /></span><span style="color: #000080; font-weight: bold;">private int </span>getOutNode() {</span><br /><span style="font-size: small;">   <span style="color: #000080; font-weight: bold;">int </span>i;</span><br /><span style="font-size: small;">   <span style="color: #000080; font-weight: bold;">boolean </span>foundIn=<span style="color: #000080; font-weight: bold;">true</span>;</span><br /><br /><span style="font-size: small;">   <span style="color: #000080; font-weight: bold;">for</span>(i=<span style="color: #0000ff;">0</span>; i&lt;<span style="color: #660e7a; font-weight: bold;">size </span>&amp;&amp; foundIn; i++) {</span><br /><span style="font-size: small;">      <span style="color: #000080; font-weight: bold;">if </span>(<span style="color: #660e7a; font-weight: bold;">deactivated</span>[i])</span><br /><span style="font-size: small;">         <span style="color: #000080; font-weight: bold;">continue</span>;</span><br /><span style="font-size: small;">      foundIn = <span style="color: #000080; font-weight: bold;">false</span>;</span><br /><span style="font-size: small;">      <span style="color: #000080; font-weight: bold;">for</span>(<span style="color: #000080; font-weight: bold;">int </span>j=<span style="color: #0000ff;">0</span>; j&lt;<span style="color: #660e7a; font-weight: bold;">size </span>&amp;&amp; !foundIn; j++)</span><br /><span style="font-size: small;">         foundIn = weight(j,i) != <span style="color: #0000ff;">0</span>;</span><br /><span style="font-size: small;">   }</span><br /><br /><span style="font-size: small;">   <span style="color: #000080; font-weight: bold;">if</span>(!foundIn) {</span><br /><span style="font-size: small;">      isolate(i-<span style="color: #0000ff;">1</span>);</span><br /><span style="font-size: small;">      <span style="color: #660e7a; font-weight: bold;">deactivated</span>[i-<span style="color: #0000ff;">1</span>] = <span style="color: #000080; font-weight: bold;">true</span>;</span><br /><span style="font-size: small;">   }</span><br /><br /><span style="font-size: small;">   <span style="color: #000080; font-weight: bold;">return </span>!foundIn ? i-<span style="color: #0000ff;">1 </span>: -<span style="color: #0000ff;">1</span>; <span style="color: #808080; font-style: italic;">// if all have in-edges, there's a cycle<br /></span>}</span></pre>
+<p>Com este método auxiliar torna-se mais fácil implementar o algoritmo acima.</p>
+<p>Cada nó encontrado é colocado uma lista. No fim esta lista é traduzida para um <em>array</em> (que contém os índices dos nós na ordenação topológica). </p>
+<pre style="background-color: #ffffff; color: #000000; font-family: 'Courier New'; margin-left: 30px;"><span style="font-size: small;"><span style="color: #808080; font-style: italic;">/**<br /></span><span style="color: #808080; font-style: italic;"> * Performs Topological Sort<br /></span><span style="color: #808080; font-style: italic;"> * </span><span style="color: #808080; font-weight: bold; font-style: italic;">@requires </span><span style="color: #808080; font-style: italic;">a directed graph<br /></span><span style="color: #808080; font-style: italic;"> * </span><span style="color: #808080; font-weight: bold; font-style: italic;">@complexity </span><span style="color: #808080; font-style: italic;">O(V </span>+ <span style="color: #808080; font-style: italic;">E)<br /></span><span style="color: #808080; font-style: italic;"> * </span><span style="color: #808080; font-weight: bold; font-style: italic;">@return </span><span style="color: #808080; font-style: italic;">an array of indexes with one topological sort of the graph<br /></span><span style="color: #808080; font-style: italic;"> *         or null if the graph has cycles (ie, it is not a DAG)<br /></span><span style="color: #808080; font-style: italic;"> */<br /></span><span style="color: #000080; font-weight: bold;">public int</span>[] topSort() {</span><br /><span style="font-size: small;">   ArrayList&lt;Integer&gt; l = <span style="color: #000080; font-weight: bold;">new </span>ArrayList&lt;Integer&gt;();</span><br /><span style="font-size: small;">   <span style="color: #000080; font-weight: bold;">int </span>node, nodesLeft  = <span style="color: #660e7a; font-weight: bold;">size</span>;</span><br /><span style="font-size: small;">   Graph       cp       = <span style="color: #000080; font-weight: bold;">this</span>.copy();</span><br /><span style="font-size: small;">   cp.<span style="color: #660e7a; font-weight: bold;">deactivated       </span>= <span style="color: #000080; font-weight: bold;">new boolean</span>[<span style="color: #660e7a; font-weight: bold;">size</span>];</span><br /><br /><span style="font-size: small;">   <span style="color: #000080; font-weight: bold;">while</span>(nodesLeft-- &gt; <span style="color: #0000ff;">0</span>) {</span><br /><span style="font-size: small;">      node = cp.getOutNode();  <span style="color: #808080; font-style: italic;">// find &amp; deactivate node with no in-edges<br /></span><span style="color: #808080; font-style: italic;">      </span><span style="color: #000080; font-weight: bold;">if </span>(node==-<span style="color: #0000ff;">1</span>)</span><br /><span style="font-size: small;">         <span style="color: #000080; font-weight: bold;">return null</span>;</span><br /><span style="font-size: small;">      l.add(node);</span><br /><span style="font-size: small;">   }</span><br /><br /><span style="font-size: small;">   <span style="color: #000080; font-weight: bold;">return </span>list2array(l);</span><br /><span style="font-size: small;">}</span></pre>
+<p>Podem experimentar este novo algoritmo (adicionem estes métodos à classe GraphMatrix) na resolução do problema <a href="https://uva.onlinejudge.org/index.php?option=onlinejudge&amp;page=show_problem&amp;problem=136">UVa 200 Rare Order</a>.</p>
+<p>Outros problemas que podem ser abordados via ordenação topológica:</p>
+<ul>
+<li><a href="https://uva.onlinejudge.org/index.php?option=com_onlinejudge&amp;Itemid=8&amp;page=show_problem&amp;problem=60">UVa124</a> - Following Orders (usar <em>backtracking</em> para gerar ordenações válidas)</li>
+<li><a href="https://uva.onlinejudge.org/index.php?option=onlinejudge&amp;page=show_problem&amp;problem=813">UVa872</a> - Ordering</li>
+<li><a href="https://uva.onlinejudge.org/index.php?option=onlinejudge&amp;page=show_problem&amp;problem=1246">UVa10305</a> - Ordering Tasks</li>
+<li><a href="https://uva.onlinejudge.org/index.php?option=com_onlinejudge&amp;Itemid=8&amp;page=show_problem&amp;problem=2733">UVa11686</a> - Pick up sticks</li>
+</ul>
+<p>Uma outra utilidade da ordenação topológica é que serve para verificar se um dado grafo é um DAG, i.e., um <em>Directed Acyclic Graph</em>, um tipo particular de grafo muito usado em aplicações:</p>
+<pre style="background-color: #ffffff; color: #000000; font-family: 'Courier New'; margin-left: 30px;"><span style="font-size: small;"><span style="color: #808080; font-style: italic;">/**<br /></span><span style="color: #808080; font-style: italic;"> * Checks if graph is a Direct Acyclic Graph<br /></span><span style="color: #808080; font-style: italic;"> * </span><span style="color: #808080; font-weight: bold; font-style: italic;">@complexity </span><span style="color: #808080; font-style: italic;">O(V </span>+ <span style="color: #808080; font-style: italic;">E)<br /></span><span style="color: #808080; font-style: italic;"> * </span><span style="color: #808080; font-weight: bold; font-style: italic;">@return </span><span style="color: #808080; font-style: italic;">true iff graph is DAG<br /></span><span style="color: #808080; font-style: italic;"> */<br /></span><span style="color: #000080; font-weight: bold;">public boolean </span>isDAG() {</span><br /><span style="font-size: small;">   <span style="color: #000080; font-weight: bold;">return </span><span style="color: #660e7a; font-weight: bold;">isDirected</span>==<span style="color: #660e7a; font-weight: bold; font-style: italic;">DIRECT </span>&amp;&amp; topSort() != <span style="color: #000080; font-weight: bold;">null</span>;</span><br /><span style="font-size: small;">}</span></pre>
+
+<div class="modified">Last modified: Wednesday, 21 June 2017, 9:54 AM</div>
+
+</body>
+</html>

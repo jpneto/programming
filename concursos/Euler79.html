@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=yes">
+  <meta name="description" content="How to use graphs">
+  <title>Euler 79</title>
+</head>
+
+<body>
+
+<h1 style="text-align: center;">Euler 79 - Passcode derivation</h1>
+<center><span style="font-size: small;"><em>João Pedro Neto</em></span></center>
+
+<p>Esta semana vou abordar o seguinte <a href="https://projecteuler.net/problem=79" target="_blank">problema </a>do <a href="https://projecteuler.net/" target="_blank">Project Euler</a>.</p>
+<p>Consiste em descobrir qual a <strong>solução válida mais pequena</strong> para o código secreto. Como muitos outros problemas do PE, este pode ser resolvido apenas com papel e lápis.</p>
+<p>Vou primeiro explicar esse método e depois estabelecer o paralelo com a programação.</p>
+<p>Temos um ficheiro com 50 tentativas de <em>login</em> em que são pedidos certos algarismos da solução (como se fossem coordenadas da matriz bancária), cujo comprimento desconhecemos, mas sempre <strong>por ordem</strong>. Este é o pormenor que permite resolver o problema.</p>
+<p>O primeiro passo é percorrer cada uma das entrada e anotar que números aparecem à direita e esquerda. Se ordenarem o ficheiro e removerem os duplicados terão apenas <strong>33</strong> tentativas para processar.</p>
+<p>No final desse passo, deverão ter uma tabela semelhante a esta:</p>
+<table rules="all" frame="box" border="0" align="center">
+<tbody>
+<tr>
+<td style="text-align: center;">Esquerda</td>
+<td style="text-align: center;">Número</td>
+<td style="text-align: center;">Direita</td>
+</tr>
+<tr>
+<td style="text-align: center;">1, 2, 3, 6, 7, 8, 9</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">-</td>
+</tr>
+<tr>
+<td style="text-align: center;">3, 7</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">0, 2, 6, 8, 9</td>
+</tr>
+<tr>
+<td style="text-align: center;">1, 3, 6, 7</td>
+<td style="text-align: center;">2</td>
+<td style="text-align: center;">0, 8, 9</td>
+</tr>
+<tr>
+<td style="text-align: center;">7</td>
+<td style="text-align: center;">3</td>
+<td style="text-align: center;">0, 1, 2, 6, 8, 9</td>
+</tr>
+<tr>
+<td style="text-align: center;">-</td>
+<td style="text-align: center;">4</td>
+<td style="text-align: center;">-</td>
+</tr>
+<tr>
+<td style="text-align: center;">-</td>
+<td style="text-align: center;">5</td>
+<td style="text-align: center;">-</td>
+</tr>
+<tr>
+<td style="text-align: center;">1, 3, 7</td>
+<td style="text-align: center;">6</td>
+<td style="text-align: center;">0, 2, 8, 9</td>
+</tr>
+<tr>
+<td style="text-align: center;">-</td>
+<td style="text-align: center;">7</td>
+<td style="text-align: center;">0, 1, 2, 3, 6, 8, 9</td>
+</tr>
+<tr>
+<td style="text-align: center;">1, 2, 3, 6, 7</td>
+<td style="text-align: center;">8</td>
+<td style="text-align: center;">0, 9 </td>
+</tr>
+<tr>
+<td style="text-align: center;">1, 2, 3, 6, 7, 8</td>
+<td style="text-align: center;">9</td>
+<td style="text-align: center;">0</td>
+</tr>
+</tbody>
+</table>
+<p></p>
+<p>Com base nesta tabela, podemos inferir que:</p>
+<ul>
+<li>O 4 e 5 não estão presentes no código. Como estamos à procura da solução mais pequena, podemos assumir que os algarismos são únicos (sem duplicados) e sabemos que o tamanho da solução será 8.</li>
+<li>Não há valores há esquerda do 7 nem à direita do 0, portanto a solução terá o formato 7 _ _ _ _ _ _ _ 0.</li>
+</ul>
+<p> A partir daqui é ir preenchendo os espaços conforme o que a tabela indica quanto aos números à direita e esquerda.</p>
+<ol>
+<li>O 9 tem apenas o 0 à direita, logo 7  _ _ _ _ _ _ 9 0</li>
+<li>O 8 tem o 9 e 0 à direita e os restantes à esquerda,  7  _ _ _ _ _ _8 9 0</li>
+<li>...</li>
+</ol>
+<p>Assim por diante até à solução: <b>73162890. </b>Não é mais complicado que resolver um Sudoku.</p>
+<p>Agora, como podemos validar esta solução utilizando programação?</p>
+<p>Consideremos cada elemento do código secreto como sendo um nó de um grafo. A instrução que é pedida (e.g. "3.º, 5.º e 6º algarismos") representa uma sequência de transições.</p>
+<p>O que procuramos é então uma ordenação desses nós tal que as restrições existentes (a ordem de apresentação algarismos) sejam cumpridas. Como deduzimos acima que os dígitos serão únicos, sabemos também que o grafo não tem ciclos. Isto porque a <a href="grafos_top_sort.html">ordenação topológica</a> depende do grafo ser a) dirigido; b) acíclico; o chamado DAG - Directed Acyclic Graph.<a href="https://en.wikipedia.org/wiki/Directed_acyclic_graph" title=""><br /></a></p>
+<p>Outro conceito a reter é que, num grafo, o grau interno corresponde ao número de ligações que chegam e o grau externo é o número de ligações que partem.</p>
+<p>O algoritmo que escolhi foi o algoritmo de Khan, provavelmente o mais conhecido.</p>
+<p>Uma descrição deste em linguagem corrente é a seguinte (retirada da Wikipedia):</p>
+<pre>L ← Empty list that will contain the sorted elements<br />S ← Set of all nodes with no incoming edge
+
+<b>while</b> S is non-empty <b>do</b>
+    remove a node n from S
+    add n to <i>tail</i> of L
+    <b>for each</b> node m with an edge <i>e</i> from n to m <b>do</b>
+        remove edge e from the graph
+        <b>if</b> m has no other incoming edges <b>then</b>
+            insert m into S
+
+<b>if</b> graph has edges <b>then</b>
+    return error   <i>(graph has at least one cycle)</i>
+<b>else</b> 
+    return L   <i>(a topologically sorted order)<br /><br /></i></pre>
+<p>Enquanto houver nós com grau interno = 0 (num grafo sem ciclos, o nó inicial cumpre sempre este requisito), adicionamos esse nó <strong>n</strong> à lista e, de seguida, removemos todas as ligações que partem de <strong>n </strong>(reduzimos o seu grau externo a zero).</p>
+<p>Se no decorrer deste processo algum nó ficar sem ligações (grau interno = 0), esse é adicionado a <strong>S</strong> e prosseguimos até termos processado todos os arcos ou encontrado um ciclo que nos impede de continuar.</p>
+<p>Como podemos ver, é um algoritmo bastante simples, de complexidade O ( |Vértices| + |Arestas| ). Para compreenderem porque o algoritmo falha se tivermos um ciclo, podem executá-lo manualmente neste exemplo:</p>
+<p><center><img src="imgs/graph_euler79.png" width="534" height="239" alt="Grafo com Ciclo" /></center></p>
+<p>Implementação exemplo em Python:</p>
+<pre><span style="font-family: courier new, courier, monospace; font-size: small;">def solution():</span><br /><span style="font-family: courier new, courier, monospace; font-size: small;">    with open(FILE, 'r') as f:</span><br /><span style="font-family: courier new, courier, monospace; font-size: small;">        codes = [ line.strip() for line in f ] <br /></span><br /><span style="font-family: courier new, courier, monospace; font-size: small;">    graph = defaultdict(lambda: set()) # Graph as a Dictionary { NODE: [NODES] }</span><br /><span style="font-family: courier new, courier, monospace; font-size: small;">    for a, b, c in codes:</span><br /><span style="font-family: courier new, courier, monospace; font-size: small;">        graph[a].add(b)</span><br /><span style="font-family: courier new, courier, monospace; font-size: small;">        graph[b].add(c)</span><br /><span style="font-family: courier new, courier, monospace; font-size: small;">    passcode = list()</span><br /><span style="font-family: courier new, courier, monospace; font-size: small;">    digits = {'7'}  # We know it starts with 7</span><br /><span style="font-family: courier new, courier, monospace; font-size: small;">    while digits:  # &lt;=&gt; while not empty</span><br /><span style="font-family: courier new, courier, monospace; font-size: small;">        n = digits.pop()</span><br /><span style="font-family: courier new, courier, monospace; font-size: small;">        passcode.append(n)</span><br /><span style="font-family: courier new, courier, monospace; font-size: small;">        edges = graph.get(n)</span><br /><span style="font-family: courier new, courier, monospace; font-size: small;">        if edges is not None:</span><br /><span style="font-family: courier new, courier, monospace; font-size: small;">            # Makes a copy</span><br /><span style="font-family: courier new, courier, monospace; font-size: small;">            explore = set(edges)</span><br /><span style="font-family: courier new, courier, monospace; font-size: small;">            for node in explore:</span><br /><span style="font-family: courier new, courier, monospace; font-size: small;">                graph[n].remove(node)</span><br /><span style="font-family: courier new, courier, monospace; font-size: small;">                # {y for x in graph.values() for y in x} &lt;=&gt; Every node that is a destination</span><br /><span style="font-family: courier new, courier, monospace; font-size: small;">                # values() returns several sets and those are flattened</span><br /><span style="font-family: courier new, courier, monospace; font-size: small;">                if node not in {y for x in graph.values() for y in x}:</span><br /><span style="font-family: courier new, courier, monospace; font-size: small;">                    digits.add(node)</span><br /><span style="font-family: courier new, courier, monospace; font-size: small;">    return ''.join(passcode)<br /></span></pre>
+<p>No final, obtemos a solução, representando aqui a ordem dos nós no grafo.</p>
+<p>Para um problema mais avançado de "encontra a sequência", podem espreitar o <a href="https://projecteuler.net/problem=185" target="_blank">PE 185 - Number Mind.</a></p>
+<p>Para mais problemas com <a class="autolink" title="Grafos" href="https://moodle.ciencias.ulisboa.pt/mod/page/view.php?id=113913">grafos</a>, <a href="https://projecteuler.net/problem=107" target="_blank">PE 107 - Minimal network</a>, <a href="https://projecteuler.net/problem=434" target="_blank">PE 434 - Rigid graphs</a>, <a href="https://projecteuler.net/problem=81" target="_blank">PE 81 - Path sum: two ways</a> (82 e 83 também).</p>
+
+<p>Se estiverem interessados em resolver mais problemas do Project Euler, podem adicionar-me lá para trocar ideias. A minha Friend Key é <code>1064683_5kGuQY3pi0KcVhEm40ypEOPZsSBj0DKX</code>.</p>
+
+</body>
+</html>

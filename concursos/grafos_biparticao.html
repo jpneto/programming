@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=yes">
+  <meta name="description" content="How to use graphs">
+  <title>Grafos - Bipartição</title>
+</head>
+
+<body>
+
+<h1 style="text-align: center;">Grafos - Bipartição</h1>
+<center><span style="font-size: small;"><em>João Pedro Neto</em></span></center>
+
+<p>Um grafo é bipartido se pode ser dividido em dois conjuntos de nós, nos quais cada nó de um conjunto apenas tem ligações a nós do outro conjunto.</p>
+<p>Por exemplo, o seguinte grafo é bipartido:</p>
+<p style="text-align: center;"><img src="imgs/graph_bipartide.gif" width="268" height="253" /></p>
+<p>Diz-se também que um grafo bipartido pode ser colorido apenas com duas cores (na colocação de <a class="autolink" title="Grafos" href="https://moodle.ciencias.ulisboa.pt/mod/page/view.php?id=113913">grafos</a> é proíbido ter dois nós conectados entre si com a mesma cor). É esta interpretação que a solução seguinte utiliza.</p>
+<p>O algoritmo começa por colorir o primeiro nó do grafo com a cor 1 (por exemplo). Depois colora os seus sucessores com a cor 2 e coloca-os numa fila para fazer o mesmo aos seus vários sucessores (ou seja, estamos a usar uma pesquisa em largura). Se porventura aparecer um caso que não se pode resolver (dois vizinhos que teriam de ter a mesma cor) terminamos em insucesso.</p>
+<pre style="background-color: #ffffff; color: #000000; font-family: 'Courier New'; margin-left: 30px;"><span style="font-size: small;"><span style="color: #808080; font-style: italic;">/**<br /></span><span style="color: #808080; font-style: italic;"> * Checks if a graph is bipartide, ie, it's 2-colorable<br /></span><span style="color: #808080; font-style: italic;"> * </span><span style="color: #808080; font-weight: bold; font-style: italic;">@requires </span><span style="color: #808080; font-style: italic;">a connected undirected graph (including node 0)<br /></span><span style="color: #808080; font-style: italic;"> * </span><span style="color: #808080; font-weight: bold; font-style: italic;">@complexity </span><span style="color: #808080; font-style: italic;">O(V </span>+ <span style="color: #808080; font-style: italic;">E)<br /></span><span style="color: #808080; font-style: italic;"> * </span><span style="color: #808080; font-weight: bold; font-style: italic;">@return </span><span style="color: #808080; font-style: italic;">true iff is bipartide<br /></span><span style="color: #808080; font-style: italic;"> */<br /></span><span style="color: #000080; font-weight: bold;">public boolean </span>isBipartide() {</span><br /><span style="font-size: small;">   <span style="color: #000080; font-weight: bold;">int</span>[] colors = <span style="color: #000080; font-weight: bold;">new int</span>[<span style="color: #660e7a; font-weight: bold;">size</span>];    <span style="color: #808080; font-style: italic;">// we use colors 1 and 2<br /></span><span style="color: #808080; font-style: italic;">   </span>Queue&lt;Integer&gt; queue = <span style="color: #000080; font-weight: bold;">new </span>LinkedList&lt;Integer&gt;();</span><br /><span style="font-size: small;">   queue.add(<span style="color: #0000ff;">0</span>);                    <span style="color: #808080; font-style: italic;">// add a graph's node<br /></span><span style="color: #808080; font-style: italic;">   </span>colors[<span style="color: #0000ff;">0</span>] = <span style="color: #0000ff;">1</span>;                   <span style="color: #808080; font-style: italic;">// ...and 'paint' it with color 1<br /></span><span style="color: #808080; font-style: italic;"><br /></span><span style="color: #808080; font-style: italic;">   </span><span style="color: #000080; font-weight: bold;">boolean </span>isBipartide = <span style="color: #000080; font-weight: bold;">true</span>;</span><br /><span style="font-size: small;">   <span style="color: #000080; font-weight: bold;">while</span>(!queue.isEmpty() &amp;&amp; isBipartide) {</span><br /><span style="font-size: small;">      <span style="color: #000080; font-weight: bold;">int </span>current = queue.poll();</span><br /><span style="font-size: small;">      <span style="color: #000080; font-weight: bold;">for</span>(<span style="color: #000080; font-weight: bold;">int </span>node : sucessors(current))</span><br /><span style="font-size: small;">         <span style="color: #000080; font-weight: bold;">if </span>(colors[node] == <span style="color: #0000ff;">0</span>) {               <span style="color: #808080; font-style: italic;">// the color isn't yet assigned<br /></span><span style="color: #808080; font-style: italic;">            </span>colors[node] = <span style="color: #0000ff;">3</span>-colors[current];  <span style="color: #808080; font-style: italic;">// 1 --&gt; 2, 2 --&gt; 1<br /></span><span style="color: #808080; font-style: italic;">            </span>queue.add(node);</span><br /><span style="font-size: small;">         } <span style="color: #000080; font-weight: bold;">else<br /></span><span style="color: #000080; font-weight: bold;">            </span>isBipartide = colors[current] != colors[node]; <span style="color: #808080; font-style: italic;">// must have diff colors<br /></span><span style="color: #808080; font-style: italic;">   </span>}</span><br /><span style="font-size: small;">   <span style="color: #000080; font-weight: bold;">return </span>isBipartide;</span><br /><span style="font-size: small;">}</span></pre>
+
+<p>Problemas relacionados:</p>
+<ul>
+<li>UVa 10004 - Bicoloring</li>
+<li>UVa 11080 - Place the Guards</li>
+<li>UVa 11396 - Claw Decomposition</li>
+</ul>
+
+<div class="modified">Last modified: Wednesday, 21 June 2017, 10:56 AM</div>
+
+</body>
+</html>
