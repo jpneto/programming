@@ -1,0 +1,249 @@
+<style>
+.small-code pre code {
+  font-size: 1em;  /* 1em = 10px */
+}
+
+/* This changes the background for slides of type exercise
+   Eg use: type: exercise (after the slide's ==== )
+*/
+
+.exercise .reveal .state-background {
+  background: #F3F3F3;
+} 
+
+.reveal {
+  font-size: 28px; /* to edit use 36px, to save use 28pt */
+}
+
+/* Defines a header to place on a two-column slide */
+
+.header {
+    color:      black; 
+    background: white;
+    position:   fixed; 
+    top:        12.5%;
+    text-align: left; 
+    width:      100%;
+}
+</style>
+
+Exercícios
+========================================================
+date: 
+autosize: true
+
+Análise Exploratória do dataset Boston
+========================================================
+class: small-code
+
+Este dataset descreve preços de habitações nas zonas suburbanas de Boston:
+
+```{r}
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+
+data(Boston, package = "MASS")
+
+df <- tbl_df(Boston)
+df
+```
+
+Exercício
+========================================================
+class: small-code
+type: exercise
+
+Faça o histograma da variável `medv`
+
+```{r, echo=FALSE}
+df %>% 
+  ggplot(aes(x=medv)) +
+    geom_histogram()
+```
+
+Solução 
+========================================================
+
+Passamos o data frame para o `ggplot` e definimos o **geom** histogram:
+
+```{r, eval=FALSE}
+df %>% 
+  ggplot(aes(x=medv)) +
+    geom_histogram()
+```
+
+Nota-se de imediato que a variável não parece seguir uma distribuição normal.
+
+Exercício
+========================================================
+class: small-code
+type: exercise
+
+Apresentar as distribuições empíricas de todas as variáveis:
+
+```{r, echo=FALSE, fig.width=12, fig.height=8}
+df %>% 
+  gather("key", "val", 1:14) %>%   # place all data into column 'key'
+  ggplot(aes(x = val)) +
+    geom_area(stat="density") +
+    facet_wrap(~key, scales = "free")
+```
+
+Solução 
+========================================================
+class: small-code
+
+A ideia chave é usar as facetas do `ggplot`. Para isso é preciso colocarmos todos os valores das colunas numa coluna única para que as facetas possam funcionar:
+
+```{r}
+df %>% 
+  gather("key", "val", 1:14)  
+```
+
+Solução 
+========================================================
+
+Com a tabela neste formato podemos usar as facetas do `ggplot`:
+
+```{r}
+df %>% 
+  gather("key", "val", 1:14) %>%  
+  ggplot(aes(x = val)) +
+    geom_area(stat="density") +
+    facet_wrap(~key, scales="free")
+```
+
+Exercício
+========================================================
+class: small-code
+type: exercise
+
+Mostrar a regressão linear entre as variáveis `medv` e `rm`:
+
+```{r, echo=FALSE, fig.width=12, fig.height=8}
+mdl <- lm(medv ~ rm, data=df)
+
+coef.icept <- coef(mdl)[1]
+coef.slope <- coef(mdl)[2]
+
+df %>% 
+  ggplot(aes(x=rm, y=medv)) +
+  geom_point() +
+  geom_abline(intercept=coef.icept, slope=coef.slope, color="red", lwd=1.25)
+```
+
+Solução 
+========================================================
+
+O modelo linear é feito pela função R, `lm`:
+
+```{r}
+mdl <- lm(medv ~ rm, data=df) # aplicar a regressão linear
+
+coef.icept <- coef(mdl)[1]    # ir buscar a interseção
+coef.slope <- coef(mdl)[2]    # ir buscar o declive
+```
+
+Solução 
+========================================================
+class: small-code
+
+Agora o `ggplot` já pode desenhar a linha juntamente com os pontos:
+
+```{r}
+df %>% 
+  ggplot(aes(x=rm, y=medv)) +
+  geom_point() +
+  geom_abline(intercept=coef.icept, slope=coef.slope, color="red", lwd=1.25)
+```
+
+Exercício
+========================================================
+class: small-code
+type: exercise
+
+Fazer o histograma dos residuais para confirmar visualmente se a relação entre as duas variáveis é linear:
+
+```{r, echo=FALSE}
+residuals <- data.frame(res=mdl$residuals, 
+                        fit=mdl$fitted.values)
+
+residuals %>% 
+  ggplot(aes(res)) +
+  geom_histogram()
+```
+
+Solução 
+========================================================
+
+```{r, eval=FALSE}
+residuals <- data.frame(res=mdl$residuals, 
+                        fit=mdl$fitted.values)
+
+residuals %>% 
+  ggplot(aes(res)) +
+  geom_histogram()
+```
+
+O histograma dos residuais não parece ser seguir uma normal, o que é indicação que a relação entre as duas variáveis não deve ser linear.
+
+Exercício
+========================================================
+class: small-code
+type: exercise
+
+Fazer o diagrama entre os residuais e os valores ajustados:
+
+```{r, echo=FALSE}
+residuals %>% 
+  ggplot(aes(x = fit, y = res)) +
+    geom_point() + 
+    geom_smooth(se = FALSE) +
+    labs(x = "fitted", y = "residual")
+```
+
+Solução 
+========================================================
+
+```{r, eval=FALSE}
+residuals %>% 
+  ggplot(aes(x = fit, y = res)) +
+    geom_point() + 
+    geom_smooth(se = FALSE) +
+    labs(x = "fitted", y = "residual")
+```
+
+Se a relação fosse linear então a relação entre os residuais e os valores ajustados deveria ser aleatória, o que não ocorre.
+
+Solução 
+========================================================
+class: small-code
+
+Um exemplo de uma relação linear:
+
+```{r}
+set.seed(100)
+x <- 1:100
+y <- 1.3*x + rnorm(100, 0, 5)
+df2 <- data.frame(x=x, y=y)
+
+mdl2 <- lm(y ~ x, data=df2)
+
+residuals2 <- 
+  data.frame(res=mdl2$residuals, 
+             fit=mdl2$fitted.values)
+```
+
+Neste dataset os residuais estão distribuídos mais aleatoriamente:
+
+***
+
+```{r}
+residuals2 %>% 
+  ggplot(aes(x = fit, y = res)) +
+    geom_point() + 
+    geom_smooth(se = FALSE) +
+    labs(x = "fitted", y = "residual")
+```
+

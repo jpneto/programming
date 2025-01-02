@@ -1,0 +1,351 @@
+<style>
+.small-code pre code {
+  font-size: 1em;  /* 1em = 10px */
+}
+
+/* This changes the background for slides of type exercise
+   Eg use: type: exercise (after the slide's ==== )
+*/
+
+.exercise .reveal .state-background {
+  background: #F3F3F3;
+} 
+
+/* Defines a header to place on a two-column slide */
+
+.header {
+    color:      black; 
+    background: white;
+    position:   fixed; 
+    top:        12.5%;
+    text-align: left; 
+    width:      100%;
+}
+
+.reveal {
+  font-size: 28px; /* to edit use 36px, to save use 28pt */
+}
+
+/* This places images where we want. Eg use:
+  <div class="midcenter" style="margin-left:-300px; margin-top:-300px;">
+     <img src="flowchart_600x600.png"></img>
+  </div>
+*/
+
+.midcenter { 
+    position: fixed;
+    top:      50%;
+    left:     50%;
+}
+
+</style>
+
+Preparação de Dados
+========================================================
+date: 2016
+autosize: true
+
+```{r setup, include=FALSE}
+# If you run into problems with cached output you can always use the Clear Knitr Cache command on the More menu to rebuild your presentation without previously cached output.
+opts_chunk$set(cache=TRUE)
+```
+
+O pacote `tidyr` 
+========================================================
+class: small-code
+
+O pacote `tidyr` é utilizado para preparar data frames que se encontram muitas vezes num formato inapropriado para análise.
+
+```{r}
+library(readr)
+library(tidyr)
+
+TB <- read_csv("data/tb.csv")
+head(TB,6)
+```
+
+Neste caso nota-se que cada coluna é uma combinação de dados que podem ser separados de forma mais conveniente.
+
+O pacote `tidyr` 
+========================================================
+class: small-code
+
+Este pacote permite que manipulemos este género de tabelas para criar uma estrutura mais organizada:
+
+```{r}
+TB %>% 
+   gather("column", "cases", 3:23) %>%
+   separate("column", c("new", "var", "sexage")) %>%
+   separate("sexage", c("sex", "age"), 1) -> TB.tidy
+TB.tidy[30500:30510,]
+```
+
+Vamos explorar como funcionam estas funções.
+
+O pacote `tidyr` 
+========================================================
+class: small-code
+
+Uma tabela considera-se 'arrumada' (tidy) se cada variável é colocada numa coluna, cada observação numa linha, e cada valor numa célula.
+
+Estes são exemplos da tabelas não arrumadas:
+
+<center>![alt text](imgs/not-tidy.jpg)</center>
+
+O par chave-valor
+========================================================
+class: small-code
+
+O pacote usa o conceito de *chave -- valor*. A chave dá o contexto ao valor. 
+
+Por exemplo, o par "mês: 11" diz-nos que o valor 11 refere-se ao mês do ano, i.e., Novembro. Sem o contexto, o valor 11 seria ambíguo.
+
+Cada célula de uma tabela arrumada contém o valor, enquanto o nome da respectiva coluna identifica a chave:
+
+<center>![alt text](imgs/yes-tidy.jpg)</center>
+
+Função spread()
+========================================================
+class: small-code
+
+A função `spread()` transforma pares de colunas em colunas arrumadas.
+
+```{r}
+# install.packages("devtools")
+# devtools::install_github("garrettgman/DSR")
+library(DSR) 
+
+head(table2, 3)
+head(spread(table2,key,value), 3)
+```
+
+Função spread()
+========================================================
+class: small-code
+
+Possui três argumentos: `convert=FALSE` que converte *strings* para tipos mais apropriados; `drop=TRUE` que preenche valores que não aparecem na tabela original com o valor dado no 3º argumento `fill=NA`. 
+
+Um exemplo:
+
+```{r}
+df <- data.frame(n=c("ana","ana","ana","rui","rui"), x=c("a","b","c","a","b"), y=1:5)
+df
+spread(df, x, y, fill=-1)
+```
+
+
+Função gather()
+========================================================
+class: small-code
+
+A função `gather()` faz o inverso de `spread()`: transforma um conjunto de colunas numa coluna de chaves, colocando os valores das células numa coluna de valores.
+
+```{r}
+table4
+gather(table4, "year", "cases", 2:3)
+```
+
+Função separate()
+========================================================
+class: small-code
+
+A função `separate()` parte uma coluna em diversas colunas a partir de um separador:
+
+```{r}
+table3
+separate(table3, "rate", into=c("cases", "population"), sep="/", convert=TRUE)
+```
+
+Função separate()
+========================================================
+class: small-code
+
+A função pode separar numa qualquer posição:
+
+```{r}
+table3
+separate(table3, "rate", into=c("col1", "col2", "col3"), sep=c(2,5))
+```
+
+Função unite()
+========================================================
+class: small-code
+
+A função `unite()` faz o contrário, funde colunas numa só:
+
+```{r}
+table6
+unite(table6, "new.year", century, year, sep="")
+```
+
+Exemplo: variáveis múltiplas numa mesma coluna
+========================================================
+class: small-code
+
+```{r}
+TB <- read_csv("data/tb.csv")
+TB
+```
+
+`new` significa se é um novo caso de tuberculose, as duas letras seguintes representam o tipo de caso de TB, a 6ª letra é o sexo do paciente, e os restantes números dizem-nos a faixa etária.
+
+Exemplo: variáveis múltiplas numa mesma coluna
+========================================================
+class: small-code
+
+A tabela original não está arrumada. Podemos arrumá-la desta forma:
+
+```{r}
+TB %>% 
+   gather("column", "cases", 3:23) %>%
+   separate("column", c("new", "var", "sexage")) %>%
+   separate("sexage", c("sex", "age"), 1)
+```
+
+
+Exemplo: os nomes das colunas são valores
+========================================================
+class: small-code
+
+```{r}
+pew <- read_csv("data/pew.csv")
+pew
+```
+
+Exemplo: os nomes das colunas são valores
+========================================================
+class: small-code
+
+Para arrumá-la:
+
+```{r}
+pew %>%
+  gather("income", "frequency", -religion)
+```
+
+A expressão `-religion` representa todas as colunas excepto a coluna `religion`.
+
+Para efectuar manipulações mais complexas devemos também usar o pacote `dplyr`.
+
+Combinar `tidyr` e `dplyr`
+========================================================
+class: small-code
+
+Esta tabela tem variáveis guardadas nas colunas e nas linhas:
+
+```{r}
+library(readr)
+library(tidyr)
+library(dplyr)
+
+weather <- read_csv("data/weather.csv", col_names = FALSE)
+names(weather) <- c("header", paste0("d",1:32))
+weather
+```
+
+A 1ª coluna tem informação sobre a data e se os dados referem-se à temperatura mínima ou máxima (entre outros tipos de informação).
+
+Combinar `tidyr` e `dplyr`
+========================================================
+class: small-code
+
+Primeiro partimos a 1ª coluna em partes:
+
+```{r}
+weather %>%
+    separate("header", c("id","year","month","elem"), c(11,15,17), convert=TRUE) 
+```
+
+
+Combinar `tidyr` e `dplyr`
+========================================================
+class: small-code
+
+A seguir juntamos as colunas dos vários dias numa única coluna:
+
+```{r}
+weather %>%
+    separate("header", c("id","year","month","elem"), c(11,15,17), convert=TRUE) %>%
+    gather(day, value, d1:d31, na.rm=TRUE)
+```
+
+
+Combinar `tidyr` e `dplyr`
+========================================================
+class: small-code
+
+Convertemos as colunas `day` e `value` em valores numéricos:
+
+```{r}
+weather %>%
+    separate("header", c("id","year","month","elem"), c(11,15,17), convert=TRUE) %>%
+    gather(day, value, d1:d31, na.rm=TRUE) %>%
+    mutate(day   = extract_numeric(day)) %>%
+    mutate(value = extract_numeric(value))
+```
+
+Combinar `tidyr` e `dplyr`
+========================================================
+class: small-code
+
+Arrumamos os valores da coluna `elem` -- que determina as temperaturas mínima e máxima, entre outros dados -- em colunas próprias:
+
+```{r}
+weather %>%
+    separate("header", c("id","year","month","elem"), c(11,15,17), convert=TRUE) %>%
+    gather(day, value, d1:d31, na.rm=TRUE) %>%
+    mutate(day   = extract_numeric(day)) %>%
+    mutate(value = extract_numeric(value)) %>%
+    spread(elem, value) 
+```
+
+Combinar `tidyr` e `dplyr`
+========================================================
+class: small-code
+
+Finalmente, escolhemos as colunas que nos interessam:
+
+```{r}
+weather %>%
+    separate("header", c("id","year","month","elem"), c(11,15,17), convert=TRUE) %>%
+    gather(day, value, d1:d31, na.rm=TRUE) %>%
+    mutate(day   = extract_numeric(day)) %>%
+    mutate(value = extract_numeric(value)) %>%
+    spread(elem, value) %>%
+    dplyr::select(id, year, month, day, TMIN, TMAX)
+```
+
+Exercício
+========================================================
+class: small-code
+type: exercise
+
+Esta tabela não está arrumada, ela tem dados nos nomes das colunas (o número da semana):
+
+```{r}
+bb <- read_csv("data/billboard.csv")
+names(bb) <- c(names(bb[1:7]),paste0("wk",1:76))
+head(bb,6)
+```
+
+Exercício
+========================================================
+class: small-code
+type: exercise
+
+Arrumar a tabela para ficar desta forma:
+
+```{r, echo=FALSE}
+bb.tidy <- bb %>%
+           gather("week", "rank", wk1:wk76, na.rm = TRUE) %>%
+           mutate(week = extract_numeric(week)) %>%
+           mutate(date = as.Date(date.entered) + 7 * (week - 1)) %>%
+           rename(artist = artist.inverted) %>%
+           dplyr::select(artist, date, rank, genre, time, track) %>%
+           arrange(artist, date)        # sort data
+
+head(bb.tidy, 15)
+```
+
+Dica: a coluna `date` pode ser calculada por: <br> <center> `mutate(date = as.Date(date.entered) + 7 * (week - 1))` </center>
+

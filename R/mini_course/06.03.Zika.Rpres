@@ -1,0 +1,202 @@
+<style>
+.small-code pre code {
+  font-size: 1em;  /* 1em = 10px */
+}
+
+/* This changes the background for slides of type exercise
+   Eg use: type: exercise (after the slide's ==== )
+*/
+
+.exercise .reveal .state-background {
+  background: #F3F3F3;
+} 
+
+.reveal {
+  font-size: 28px; /* to edit use 36px, to save use 28pt */
+}
+
+/* Defines a header to place on a two-column slide */
+
+.header {
+    color:      black; 
+    background: white;
+    position:   fixed; 
+    top:        12.5%;
+    text-align: left; 
+    width:      100%;
+}
+</style>
+
+Exercícios
+========================================================
+date: 
+autosize: true
+
+Exercício
+========================================================
+class: small-code
+type: exercise
+
+Mapear a epidemia do vírus Zika no Brasil usando os dados disponíveis em 
+
+[https://github.com/cdcepi/zika](https://github.com/cdcepi/zika)
+
+Exercício
+========================================================
+class: small-code
+
+Existem sete ficheiros, cada um correspondendo a uma semana de recolha de dados
+
+```{r}
+library(readr)
+library(purrr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(ggmap)
+
+url <- paste0("https://raw.githubusercontent.com/cdcepi/zika/master/Brazil/",
+              "Epidemiological_Bulletin/data/Epidemiological_Bulletin-<DATE>.csv")
+
+dates <- c("2016-04-02", "2016-04-23", "2016-04-30", 
+           "2016-05-07", "2016-05-14", "2016-05-21", "2016-05-28")
+
+file.names <- map_chr(dates, function(x) gsub("<DATE>",x,url))
+zika.full  <- invoke_map_df(read_csv, file.names)
+zika.full %>% print(n=12)
+```
+
+Exercício
+========================================================
+class: small-code
+
+A tabela está num formato confuso, misturando regiões, estados e o total do país (que se encontra na última linha da tabela). Vamos simplificar a tabela para podermos aceder aos dados de forma mais eficiente.
+
+A primeira tarefa é colocar a respectiva região para cada um dos estados do Brasil:
+
+```{r}
+  # onde estão as linhas das regiões?
+region.idxs <- which(zika.full$location_type=="region")
+  # quantos estados têm cada região
+rep.amount <- diff(region.idxs)
+  # incluir a dimensão da última região
+rep.amount <- c(rep.amount, nrow(zika.full)-region.idxs[length(region.idxs)])
+  # repetir o nome da região para cada estado respectivo
+regions <- rep(zika.full[region.idxs,]$location, rep.amount)
+  # a última linha é a do Brasil
+zika.full$region <- c(regions,NA) 
+```
+
+Exercício
+========================================================
+class: small-code
+
+Agora vamos filtrar apenas as colunas dos estados, e apagar as colunas que não nos interessam:
+
+```{r}
+zika.full %>% 
+   dplyr::filter(location_type=="state") %>%
+   dplyr::filter(location!="Brazil") %>%
+   separate("location", into=c("Country", "State"), sep="-") %>% 
+   select(-c(2,4:8,10)) -> zika.states
+zika.states
+```
+
+Exercício
+========================================================
+class: small-code
+
+Já podemos apresentar esta informação:
+
+```{r}
+zika.states %>% 
+  group_by(report_date, region) %>% 
+  summarize(cases=sum(value)) %>% 
+  ggplot(aes(x=report_date, y=cases, group=region, color=region)) + 
+  geom_line() + 
+  geom_point() + 
+  ggtitle("Casos do Zika por Região")
+```
+
+Exercício
+========================================================
+class: small-code
+
+Vamos agora apresentar os dados geograficamente. Primeiro é necessário recolher as coordenadas GPS dos vários estados brasileiros:
+
+```{r, eval=FALSE}
+library(ggmap)
+
+# pesquisar coordenadas de cada estado e colocar na tabela 'longlat'
+longlat     <- geocode(paste(unique(zika.states$State), " Brazil")) 
+longlat$Loc <- unique(zika.states$State)
+
+# unir as tabelas fazendo um join pelo nome do estado
+zika.states %>% 
+  inner_join(longlat, by=c("State"="Loc")) -> zika.states2
+zika.states2
+```
+
+```{r, echo=FALSE}
+library(readr)
+# to prevent a time-consuming operation
+zika.states2 <- read_csv("data/zika.states2.csv")
+zika.states2 %>% print(n=12)
+```
+
+Exercício
+========================================================
+class: small-code
+
+Vejamos os dados recolhidos na primeira semana:
+
+```{r}
+plot.data <- 
+  zika.states2 %>% 
+  dplyr::filter(report_date==dates[1])
+
+brazil <-  
+  get_map(location = "Brazil", zoom = 4) 
+
+map <- 
+  ggmap(brazil) + 
+  geom_point(data=plot.data, alpha=0.5, 
+             aes(x=lon, y=lat, size=value, 
+                 color=region)) + 
+  scale_size_continuous(range = c(4, 10)) + 
+  guides(colour = guide_legend(override.aes = list(size=5)))
+```
+
+***
+
+```{r, echo=FALSE}
+map
+```
+
+Exercício
+========================================================
+class: small-code
+
+É possível animar a visualização com `gganimate`, uma extensão do `ggplot`:
+
+```{r, eval=FALSE}
+# ref:     https://github.com/dgrtwo/gganimate
+# install: devtools::install_github("dgrtwo/gganimate")
+
+map2 <- 
+  ggmap(brazil) + 
+  geom_point(data=zika.states2, alpha=0.5, 
+             aes(x=lon, y=lat, size=value, 
+                 color=region, 
+                 frame=report_date)) +  # !!
+  scale_size_continuous(range = c(4, 10)) + 
+  guides(colour = guide_legend(override.aes = list(size=5)))
+
+library(gganimate)
+gg_animate(map2, interval=1.5)
+```
+
+***
+
+!["brasil zika animation"](imgs/brazil_animate.gif)
+

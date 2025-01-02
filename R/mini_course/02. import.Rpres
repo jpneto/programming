@@ -1,0 +1,280 @@
+<style>
+.small-code pre code {
+  font-size: 1em;  /* 1em = 10px */
+}
+
+/* This changes the background for slides of type exercise
+   Eg use: type: exercise (after the slide's ==== )
+*/
+
+.exercise .reveal .state-background {
+  background: #F3F3F3; 
+} 
+
+.reveal {
+  font-size: 28px; /* to edit use 36px, to save use 28pt */
+}
+
+/* Defines a header to place on a two-column slide */
+
+.header {
+    color:      black; 
+    background: white;
+    position:   fixed; 
+    top:        12.5%;
+    text-align: left; 
+    width:      100%;
+}
+</style>
+
+Importação de Dados
+========================================================
+autosize: true
+
+<!-- author: João Pedro Neto -->
+
+```{r setup, include=FALSE}
+# If you run into problems with cached output you can always use the Clear Knitr Cache command on the More menu to rebuild your presentation without previously cached output.
+opts_chunk$set(cache=TRUE)
+```
+
+Ficheiros de Dados
+========================================================
+
+Os dados necessários para realizar análises e inferências costumam encontrar-se em variados formatos e configurações.
+
+Vamos focar-nos em dois exemplos: dados armazenados em ficheiros de texto, e dados disponíveis em páginas na internet.
+
+Para lidar com dados em ficheiros de texto usaremos o pacote `readr`.
+
+```{r}
+# install.packages("readr")
+library(readr)
+```
+
+Pacote `readr`
+========================================================
+class: small-code
+
+Este pacote oferece funções que transformam ficheiros de dados em tabelas (data frames).
+
+Um exemplo comum é o uso de ficheiros `csv`, onde as células estão separadas por vírgulas:
+
+```{r}
+df <- read_csv("data/pew.csv", col_names=TRUE)
+head(df[,1:10], 4)
+```
+
+Pacote `readr`
+========================================================
+
+Existem outras funções similares:
+
+- `read_csv2` assume a separação por ponto e vírgula, o que é útil em Portugal dado usarmos a vírgula como ponto decimal
+
+- `read_tsv` assume a separação por tabulação
+
+- `read_delim` que recebe o argumento `delim` onde se pode definir qual o separador
+
+As funções anteriores são casos particulares de `read_delim`. 
+
+Este código faz o mesmo que o do exemplo anterior:
+
+```{r}
+df <- read_delim("data/pew.csv", delim=",")
+```
+
+Pacote `readr`
+========================================================
+class: small-code
+
+A função `read_fwf` permite ler ficheiros com colunas de dimensão fixa. Por exemplo, este ficheiro
+
+```
+# sample data file with fixed width
+001 0943 AVFT
+002 1465 ATRE
+003 9821 TREW
+```
+
+poderia ser lido desta forma
+
+```{r}
+read_fwf("data/fixed_data.txt", fwf_widths(c(3,5,5)), col_types="iic", skip=1)
+```
+
+Pacote `readr`
+========================================================
+
+Ficheiros mais simples que contêm um elemento por linha, como este
+
+```
+93
+45
+12
+5
+87
+```
+
+podem ser lidos pela função `read_lines`:
+
+```{r}
+read_lines("data/single_elems.txt")
+```
+
+sendo os dados armazenados num vector.
+
+Pacote `readr`
+========================================================
+class: small-code
+left: 45%
+
+<div class="header">A função <code>read_file</code> lê o ficheiro para uma <i>string</i>. Esta função pode ser útil para ler blocos de texto para posterior análise.</div>
+
+<br><br> 
+
+```{r}
+moby.d <- read_file("data/moby-dick.txt")
+substr(moby.d, 1, 40)
+words <- strsplit(moby.d, 
+                 split="[^a-zA-Z]+")[[1]]
+head(words, 20)
+```
+
+***
+
+<br><br>  
+
+```{r}
+frequencies <- table(words)
+barplot(frequencies[order(frequencies, 
+                          decreasing=TRUE)][1:10])
+```
+
+
+Pacote `readr`
+========================================================
+class: small-code
+
+O pacote contém funções para traduzir *strings* para valores de outros tipos.
+
+```{r}
+parse_integer(c("1", "2", "3"))
+parse_number(c("$1000", "20%", "3,000"))
+parse_logical(c("TRUE ", " ."), na = ".")
+parse_date("2010-10-01")  # devolve um valor de tipo Date
+```
+
+
+Pacote `readr`
+========================================================
+class: small-code
+
+É possível interpretar datas no formato Português
+
+```{r}
+parse_date("14/06/17", "%d/%m/%y", locale=locale("pt"))
+parse_date("14 de Junho de 2017", "%d de %B de %Y", locale=locale("pt"))
+```
+
+Web Scraping
+========================================================
+class: small-code
+
+Outra fonte de informação é a internet. 
+
+Muito dados estão disponíveis em ficheiros *online*. Podemos automatizar a sua recolha, deixando que o computador faça o trabalho.
+
+Por vezes os dados que queremos não estão num formato fácil, e têm de ser extraídos de páginas *web* escritas em HTML.
+
+Vamos explorar algumas possibilidades de o fazer em R
+
+Transferir ficheiros de texto
+========================================================
+class: small-code
+
+Se é um ficheiro de texto que pretendemos podemos usar a função `url`:
+
+```{r}
+moby.url <- url("https://dl.dropboxusercontent.com/u/2614389/pg2701.txt")
+
+moby.d <- readLines(moby.url, n=500) # lê as primeiras n linhas
+moby.d[490:500]                      # este é um vector de strings
+```
+
+Cada pedido de `readLines` vai buscar ao servidor mais informação.
+
+Transferir ficheiros de texto
+========================================================
+class: small-code
+
+Outra possibilidade é transferir o ficheiro todo de uma vez. Podemos usar a função `download.file()` para esse efeito:
+
+```{r}
+download.file("http://www.gutenberg.org/cache/epub/2701/pg2701.txt",
+              "data/mobydick.txt")
+moby.d <- readLines("data/mobydick.txt", n=500) # ler as primeiras 500 linhas
+```
+
+Agora cada pedido de `readLines` acede ao ficheiro no computador local.
+
+Ler tabelas da web
+========================================================
+class: small-code
+
+Vejamos agora como recolher tabelas que se encontram em páginas web.
+
+Por exemplo, em www.bio.ic.ac.uk/research/mjcraw/therbook/data/taxon.txt temos:
+
+```
+"Petals" "Internode" "Sepal" "Bract" "Petiole" "Leaf" "Fruit"
+"1" 5.621498349 29.48059578 2.462106579 18.2034091 11.27909704 ...
+"2" 4.994616997 28.36024706 2.429320759 17.65204912 11.0408378 ...
+"3" 4.767504884 27.25431792 2.570497375 19.4083846 10.49072184 ...
+...
+```
+
+```{r}
+taxon_url <- "http://www.bio.ic.ac.uk/research/mjcraw/therbook/data/taxon.txt"
+taxon     <- read.table(taxon_url, header=TRUE, row.names=1)
+head(taxon, 3)
+```
+
+Obter uma tabela HTML
+========================================================
+class: small-code
+
+Por exemplo, seja a seguinte tabela neste artigo da Wikipedia:
+
+<center>![alt text](imgs/wikipedia-table.jpg)</center>
+
+Obter uma tabela HTML
+========================================================
+class: small-code
+
+Vamos usar o pacote `rvest` para aceder à tabela e ir buscar a tabela que pretendemos (neste caso será a primeira):
+
+```{r}
+wiki_url <- "http://en.wikipedia.org/wiki/World_record_progression_1500_metres_freestyle"
+
+library(rvest)
+wiki.1500 <- read_html(wiki_url)
+df        <- html_table( html_nodes(wiki.1500, "table")[[1]] )[,1:5]
+head(df,10)
+```
+
+Exercício
+========================================================
+class: small-code
+type: exercise
+
+Ir a [http://www.worldometers.info/world-population/population-by-country/](http://www.worldometers.info/world-population/population-by-country/) e usar esses dados para contruir a seguinte tabela com a população de cada país:
+
+```{r, echo=FALSE}
+pop_url   <- "http://www.worldometers.info/world-population/population-by-country/"
+pop.html  <- read_html(pop_url)
+df        <- html_table( html_nodes(pop.html, "table")[[1]] )[,2:3]
+names(df) <- c("country", "population")
+head(df,10)
+```
+

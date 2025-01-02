@@ -1,0 +1,175 @@
+<style>
+.small-code pre code {
+  font-size: 1em;  /* 1em = 10px */
+}
+
+/* This changes the background for slides of type exercise
+   Eg use: type: exercise (after the slide's ==== )
+*/
+
+.exercise .reveal .state-background {
+  background: #F3F3F3;
+} 
+
+.reveal {
+  font-size: 28px; /* to edit use 36px, to save use 28pt */
+}
+
+/* Defines a header to place on a two-column slide */
+
+.header {
+    color:      black; 
+    background: white;
+    position:   fixed; 
+    top:        12.5%;
+    text-align: left; 
+    width:      100%;
+}
+</style>
+
+Exercícios
+========================================================
+date: 
+autosize: true
+
+Um modelo linear
+========================================================
+class: small-code
+
+```{r, echo=FALSE}
+library(ggplot2)
+library(modelr)
+```
+
+Sejam os seguintes dados:
+
+```{r}
+ggplot(sim1, aes(x, y)) + theme_bw() +
+  geom_point() 
+```
+
+Um modelo linear
+========================================================
+class: small-code
+
+Vamos assumir que não temos acesso ao `lm`. Por isso, geramos uma série de modelos lineares aleatórios:
+
+```{r}
+models <- data.frame(a1 = runif(250, -20, 40), 
+                     a2 = runif(250, -5, 5))
+
+ggplot(sim1, aes(x, y)) +  theme_bw() +
+  geom_abline(aes(intercept = a1, slope = a2), data = models, alpha = 1/4) +
+  geom_point() 
+```
+
+
+Um modelo linear
+========================================================
+class: small-code
+
+Qual deles será o melhor? Para decidir qual o melhor precisamos de uma medida:
+
+```{r}
+# Os nossos modelos são descritos por rectas ('a' tem dois parametros)
+model.predictor <- function(a, data) { 
+  a[1] + data$x * a[2] 
+}
+
+# a distância de um modelo aos dados é a soma dos quadrados dos seus erros de predição
+distance <- function(model, data) {
+  diff <- data$y - model.predictor(model, data)
+  sqrt(mean(diff ^ 2))
+}
+
+sim1.distance <- function(a1, a2) { 
+  distance(c(a1, a2), sim1) 
+}
+```
+
+Um modelo linear
+========================================================
+class: small-code
+
+Vamos então calcular as distâncias dos modelos aleatórios criados:
+
+```{r}
+models %>% 
+  dplyr::mutate(dist = purrr::map2_dbl(a1, a2, sim1.distance)) -> models
+head(models)
+```
+
+Um modelo linear
+========================================================
+class: small-code
+
+E fazer o plot dos melhores:
+
+```{r}
+n.best <- 12
+best.models <- dplyr::filter(models, rank(dist) <= n.best)
+
+ggplot(sim1, aes(x, y)) + theme_bw() +
+  geom_point(size = 2, colour = "grey30") + 
+  geom_abline(aes(intercept = a1, slope = a2, colour = -dist),  # mais claro, melhor
+              data = best.models)
+```
+
+Um modelo linear
+========================================================
+class: small-code
+
+Podemos visualizar todos os modelos gerados e ver onde estão estes melhores no espaço de parametros:
+
+```{r}
+ggplot(models, aes(a1, a2)) + theme_bw() +
+  geom_point(data = best.models, size = 4, colour = "red") +
+  geom_point(aes(colour = -dist))
+```
+
+Um modelo linear
+========================================================
+class: small-code
+
+Outra forma de encontrar o modelo empiricamente seria gerar uma grelha de valores possíveis e escolher os melhores:
+
+```{r}
+expand.grid(a1 = seq(-5, 20, length = 25),
+            a2 = seq( 1,  3, length = 25)) %>% 
+ dplyr::mutate(dist = purrr::map2_dbl(a1, a2, sim1.distance)) -> grid 
+
+grid %>% 
+  ggplot(aes(a1, a2)) + theme_bw() +
+  geom_point(data = dplyr::filter(grid, rank(dist) <= n.best), size = 4, colour = "red") +
+  geom_point(aes(colour = -dist)) 
+```
+
+Um modelo linear
+========================================================
+class: small-code
+
+E podemos visualizar os resultados:
+
+```{r}
+ggplot(sim1, aes(x, y)) + theme_bw() +
+  geom_point(size = 2, colour = "grey30") + 
+  geom_abline(aes(intercept = a1, slope = a2, colour = -dist), 
+              data = dplyr::filter(grid, rank(dist) <= n.best))
+```
+
+
+Um modelo linear
+========================================================
+class: small-code
+
+Ainda outra forma seria usar a função `optim` para encontrar um mínimo para a função distância:
+
+```{r}
+best <- optim(c(0,0), distance, data = sim1)
+
+ggplot(sim1, aes(x, y)) + theme_bw() +
+  geom_point(size = 2, colour = "grey30") + 
+  geom_abline(intercept = best$par[1], slope = best$par[2], color="navyblue")
+```
+
+

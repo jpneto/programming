@@ -1,0 +1,520 @@
+<style>
+.small-code pre code {
+  font-size: 1em;  /* 1em = 10px */
+}
+
+/* This changes the background for slides of type exercise
+   Eg use: type: exercise (after the slide's ==== ) 
+*/
+
+.exercise .reveal .state-background {
+  background: #F3F3F3;
+} 
+
+.reveal {
+  font-size: 28px; /* to edit use 36px, to save use 28pt */
+}
+
+/* Defines a header to place on a two-column slide */
+
+.header {
+    color:      black; 
+    background: white;
+    position:   fixed; 
+    top:        12.5%;
+    text-align: left; 
+    width:      100%;
+}
+</style>
+
+Introdução
+========================================================
+date: 2017
+autosize: true
+
+Estrutura do Curso
+========================================================
+transition: none
+
+Este curso procura apresentar um conjunto de técnicas utéis a cada fase da análise de dados, desde a importação dos dados à comunicação de resultados:
+
+<center>![alt text](imgs/data-science.png)</center>
+
+
+Estrutura do Curso -- Dia 1
+========================================================
+transition: none
+
+Neste primeiro dia introduzimos a linguagem R, abordamos a recolha de informação, como organizá-la para posterior análise e realização de visualizações exploratórias. 
+
+<center>![alt text](imgs/data-science_day1.png)</center>
+
+Estrutura do Curso -- Dias 2, 3, e 4
+========================================================
+transition: none
+
+No 2º, 3º dia e ainda na manhã do 4º dia focar-se-ão os aspectos da transformação dos dados, da modelação e inferência.
+
+<center>![alt text](imgs/data-science_day2.png)</center>
+
+<!-- Este é o módulo principal para uma correcta interpretação dos dados e no seu uso na inferência e previsão. -->
+
+Estrutura do Curso -- Dia 4
+========================================================
+transition: none
+
+Na tarde do 4º dia falar-se-á das ferramentas do RStudio para criar apresentações que possam comunicar os resultados de forma eficaz, atraente e até interativa.
+
+<center>![alt text](imgs/data-science_day3.png)</center>
+
+Referências
+========================================================
+left: 60%
+
+Dia 1: 
+
+- Grolemund et al, **R for Data Science** <[http://r4ds.had.co.nz/](http://r4ds.had.co.nz/)>
+
+```{r, eval=FALSE}
+# inclui vários pacotes úteis
+install.packages("tidyverse")  
+library(tidyverse)
+```
+
+
+Dias 2, 3 e manhã do dia 4:
+
+- 
+
+Tarde do dia 4:
+
+-
+
+***
+
+<center><img src="imgs/r4ds.png" style="width: 50%; height: 50%"/></center>
+
+A linguagem R
+========================================================
+
+O R é uma linguagem de programação usada originalmente para computação estatística. 
+
+Foi desenvolvida na Universidade de Auckland nos anos 90 como um projecto <i>open source</i>. 
+
+Desde a sua primeira versão estável em 2000 tem ganho popularidade e é hoje uma das linguagens de eleição nas comunidades estatística e de <i>machine learning</i>.
+
+Possui, no fim de 2016, cerca de 8000 bibliotecas especializadas. A maioria encontra-se nos repositórios CRAN, BioConductor e ainda no GitHub.
+
+Usaremos o <b>RStudio</b>, uma aplicação gráfica que permite interagir de uma forma muito produtiva com a consola R.
+
+Este curso assume que todos sabem programar. Faremos de seguida uma apresentação da sintaxe R e dos conceitos/funções úteis no resto do curso.
+
+Ambiente de Trabalho: RStudio
+========================================================
+
+O RStudio está disponível em [www.rstudio.com](https://www.rstudio.com/) para vários sistemas operativos. 
+
+<center>![alt text](imgs/rstudio.jpg)</center>
+
+
+Tipos de Dados
+========================================================
+
+- Valores numéricos, strings, lógicos, factores
+
+```{r, collapse=TRUE}
+x <- 1
+y <- "Uma string"
+z <- TRUE
+i <- 1L
+class(x); class(y); class(z); class(i)
+```
+
+
+Tipos de Dados
+========================================================
+class: small-code
+
+- Vectores: sequência de valores do mesmo tipo
+
+```{r, collapse=TRUE}
+v1 <- 1:5
+v1
+class(v1)
+v2 <- c(4:5, -2, 7, -1)
+v2
+letters
+letters[1]
+letters[length(letters)]
+letters[1:5]
+letters[1:5][-1]
+```
+
+Tipos de Dados -- Vector
+========================================================
+class: small-code
+
+Gerar vectores
+
+```{r, collapse=TRUE}
+1:9
+seq(1,9)
+seq(1,9,3)
+seq(1,2,len=11)
+rep(NA, 4)
+rep(1:2, 3)
+v2
+v2 > 0
+v2[v2>0]
+v2[!v2>0]
+which(v2>0)
+```
+
+Tipos de Dados
+========================================================
+class: small-code
+
+- Listas: vector genérico que contém vários objetos (que podem ter nomes)
+
+```{r, collapse=TRUE}
+l <- list(a=1:5, b="string", c=c(TRUE,FALSE))
+class(l)
+l[1]           # uma sublista com um vector de inteiros
+l["a"]         # idem
+l[[1]]         # o vector de inteiros
+l$a            # idem
+l[[1]][2] = 0  # alterar o 2º valor do 1º elemento da lista
+l$a
+```
+
+
+
+Tipos de Dados
+========================================================
+class: small-code
+
+- Matrizes: uma coleção de valores dispostos em 2D
+
+```{r, collapse=TRUE}
+m <- matrix(15:24, nrow=2, ncol=5, byrow = TRUE)
+m
+class(m)
+m[1,]
+m[,1]
+m[1,2]
+m[,c(1,3,5)]
+```
+
+
+Tipos de Dados -- Matriz
+========================================================
+class: small-code
+
+```{r, collapse=TRUE}
+colnames(m) <- paste0("col",1:5)
+rownames(m) <- paste0("row",1:2)
+m
+m["row1","col2"]
+m1 <- matrix(-5:-1, nrow=1)
+rbind(m, m1)            # juntar matrizes por linhas
+cbind(m, m1[1:2])       # juntar matrizes por colunas
+c(m)                    # deconstruir matriz
+```
+
+Tipos de Dados
+========================================================
+class: small-code
+
+- Data frames: uma lista de vectores do mesmo tamanho
+
+```{r, collapse=TRUE}
+df <- data.frame(num=c(27,15,9,64), 
+                 char=c('a','b','c','a'), 
+                 bool=c(TRUE,FALSE,FALSE,NA))
+df
+class(df)
+nrow(df)
+ncol(df)
+
+head(iris,4)  # os datasets estão organizados em data frames
+```
+
+Tipos de Dados -- Data Frame
+========================================================
+class: small-code
+
+```{r, collapse=TRUE}
+df[[1]]             # a 1ª lista do data frame
+df$num              # idem
+df[,"num"]          # idem
+df[c(1,3)]          # um data frame parte do original
+df[c("num","bool")] # idem
+df[c(1,3),c("num","bool")] 
+```
+
+Tipos de Dados -- Data Frame
+========================================================
+class: small-code
+
+```{r, collapse=TRUE}
+df$new.col <- ifelse(!df$bool, df$num*5, -10) # adicionar coluna
+df
+
+df[,4] <- NULL                                # apagar coluna
+df
+```
+
+
+Tipos de Dados -- Data Frame
+========================================================
+class: small-code
+
+```{r, collapse=TRUE}
+head(iris,4)
+
+iris[iris$Sepal.Length == 4.9,]
+
+iris[iris$Sepal.Length == 4.9,]$Petal.Length
+```
+
+
+Tipos de Dados -- Data Frame
+========================================================
+class: small-code
+
+```{r, collapse=TRUE}
+names(iris)
+
+table(iris$Species)
+
+summary(iris[,1:4])
+
+sapply(iris, class)    # operação aplicada a cada coluna
+```
+
+Tipos de Dados
+========================================================
+class: small-code
+
+- Factores: variáveis categóricas
+
+```{r, collapse=TRUE, fig.width = 6, fig.height = 6}
+class(iris$Species)
+levels(iris$Species)
+plot(iris$Sepal.Length ~ iris$Species, xlab="Species", ylab="Sepal Length")
+```
+
+Tipos de Dados -- Factores
+========================================================
+class: small-code
+
+Pode transformar-se *strings* em factores e definir factores ordenados:
+
+```{r, collapse=TRUE}
+df$char <- factor(df$char, labels=c("a","b","c"))
+df$ord  <- ordered(cut(df$num, c(0,10,20,100), 
+                       labels=c("Baixo","Medio","Alto")))
+df
+
+sapply(df[,c(2,4)], class)
+```
+
+Na regressão o R cria *dummy vars* para os factores. 
+
+Para remover factores que já não estão a ser utilizados usar a função `droplevels()`.
+
+
+Funções
+========================================================
+class: small-code
+
+```{r, collapse=TRUE}
+dobro <- function(x) {
+  2*x
+}
+
+ePar <- function(n) {
+  n %% 2 == 0
+}
+
+dobro(1.5)
+dobro(-4:6)
+
+ePar(11)
+ePar(1:6)
+```
+
+Fechos (Closures)
+========================================================
+class: small-code
+
+As funções do R podem devolver funções que se 'lembram' dos valores das variáveis quando foram criadas (designa-se <i>environment</i> a estes conjuntos de valores):
+
+```{r, collapse=TRUE}
+increment.factory <- function(amount) {
+  function(x) x + amount
+}
+
+succ   <- increment.factory(1)
+jump10 <- increment.factory(10)
+
+succ(5)
+jump10(5)
+```
+
+
+Exemplo
+========================================================
+class: small-code
+
+<!-- ref: 
+  http://www.theresearchkitchen.com/wp-content/uploads/2014/12/test_preso.html#30 
+-->
+
+Qual a probabilidade de saírem exactamente três caras em dez lançamentos de uma moeda equilibrada? Três resoluções:
+
+1) Usando a fórmula da binomial: 
+  ${n \choose k} p^k (1-p)^{n-k} = {10 \choose 3} \left(\frac{1}{2}\right)^3 \left(\frac{1}{2}\right)^7$
+
+```{r, collapse=TRUE}
+choose(10,3) * (1/2)^3 * (1/2)^7
+```
+
+2) Usando a função massa de probabilidade da Binomial:
+
+```{r, collapse=TRUE}
+dbinom(3, prob=0.5, size=10)
+```
+
+3) Simulando:
+
+```{r, collapse=TRUE}
+set.seed(222)
+n.sims  <- 1e5
+sum(replicate(n.sims, rbinom(1, prob=.5, size=10)==3)) / n.sims
+```
+
+Exemplo
+========================================================
+class: small-code
+
+Um passeio aleatório baseado numa moeda equilibrada:
+
+```{r, fig.width = 24, fig.height = 9}
+set.seed(222)
+n.sims <- 1e3
+walk   <- cumsum(ifelse(rbinom(n.sims, prob=.5, size=1)==0, -1, 1))
+
+plot(walk, type='l', main='Passeio Aleatorio')
+abline(h=0, lty="dashed", col="darkgrey")
+```
+
+
+Programação Funcional
+========================================================
+class: small-code
+
+É possível manipular listas de valores sem usar ciclos explícitos:
+
+```{r}
+n  <- 1000
+df <- data.frame(col1=runif(n), col2=rnorm(n), col3=rexp(n))
+head(df,3)
+```
+
+Calcular a média com ciclos:
+
+```{r}
+means <- rep(NA, ncol(df))
+for(col in 1:ncol(df)) {
+  means[col] = mean(df[,col])
+}
+means
+```
+
+Programação Funcional
+========================================================
+class: small-code
+
+E sem ciclos:
+
+```{r}
+means <- apply(df, 2, mean)
+means
+```
+
+Podemos facilmente mudar a estatística:
+
+```{r}
+apply(df, 2, sd)
+```
+
+
+O pacote `purrr`
+========================================================
+class: small-code
+
+A base R tem várias funções deste tipo mas apresentamos aqui o pacote `purr` que as disponibiliza numa forma mais organizada.
+
+As funções `map_XXX` aplicam uma função a cada um dos elementos dados devolvendo valores de um dado tipo:
+
+```{r, collapse=TRUE}
+library(purrr)
+
+data  <- 1:10L
+dobro <- function(x) 2L*x
+map_int(data, dobro)
+
+map_dbl(df, mean)    # Os exemplos anteriores
+map_dbl(df, sd)
+
+keep(1:10, ~ .x%%2 == 0)  # guardar os pares
+```
+
+
+Composição de funções
+========================================================
+class: small-code
+
+É possível compor funções a partir de outras existentes:
+
+```{r}
+isEven <- compose(function(x) x==0, function(x) x%%2) 
+keep(data, isEven)
+```
+
+Também se pode aplicar uma função sobre todos os elementos:
+
+```{r}
+reduce(c(1,3,5), `+`)
+
+factorial <- function(n) reduce(1:n, `*`, .init=1)
+factorial(4)
+```
+
+Exemplo: Regressão linear por grupos
+========================================================
+class: small-code
+
+```{r}
+head(mtcars)
+groups <- split(mtcars, mtcars$cyl) # dividir os carros por cilindrada
+head(groups$`4`)
+```
+
+Exemplo: Regressão linear por grupos
+========================================================
+class: small-code
+
+```{r, fig.width=4}
+apply_lm <- function(df) { fit <- lm(mpg ~ wt, data=df); fit$cyl <- df[1,]$cyl; fit }
+models <- map(groups, apply_lm)
+
+draw_lm <- function(model) { 
+  with(mtcars,                           plot  (wt, mpg, col = "gray", pch=cyl)); 
+  with(mtcars[mtcars$cyl == model$cyl,], points(wt, mpg, col = "blue", pch=cyl)); 
+  abline(model, col="red") 
+}
+map(models, draw_lm)
+```
+

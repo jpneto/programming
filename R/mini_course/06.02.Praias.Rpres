@@ -1,0 +1,203 @@
+<style>
+.small-code pre code {
+  font-size: 1em;  /* 1em = 10px */
+}
+
+/* This changes the background for slides of type exercise
+   Eg use: type: exercise (after the slide's ==== )
+*/
+
+.exercise .reveal .state-background {
+  background: #F3F3F3;
+} 
+
+.reveal {
+  font-size: 28px; /* to edit use 36px, to save use 28pt */
+}
+
+/* Defines a header to place on a two-column slide */
+
+.header {
+    color:      black; 
+    background: white;
+    position:   fixed; 
+    top:        12.5%;
+    text-align: left; 
+    width:      100%;
+}
+</style>
+
+Exercícios
+========================================================
+date: 
+autosize: true
+
+Exercício
+========================================================
+class: small-code
+type: exercise
+
+Criar um mapa das praias portuguesas com bandeira azul.
+
+Exercício
+========================================================
+class: small-code
+
+O primeiro passo foi encontrar a informação desejada. Neste caso as praias com bandeira azul estão listadas numa página *web*:
+
+<center>![alt text](imgs/website_beaches.jpg)</center>
+
+
+Exercício
+========================================================
+class: small-code
+
+Esta página está no formato HTML onde cada região do país - num total de sete - encontra-se numa tabela separada.
+
+Vai ser necessário fazer algum pré-processamento para criar uma tabela que organize esta informação.
+
+Primeiro lemos a página para dentro do R:
+
+```{r}
+url <- "http://bandeiraazul.abae.pt/plataforma/?p=awarded&s=table"
+
+library(rvest)
+
+tabs <- read_html(url)
+tabs
+```
+
+```{r, eval=FALSE, echo=FALSE}
+# old version
+library(XML)
+library(httr)
+
+url <- "http://bandeiraazul.abae.pt/plataforma/?p=awarded&s=table"
+tabs <- GET(url)
+```
+
+Exercício
+========================================================
+class: small-code
+
+O seguinte código lê as várias tabelas HTML para um único *data frame*:
+
+```{r, }
+beaches <- data.frame(Municipio=NULL, Praia=NULL)
+
+for(tab in 1:7) {
+  df <- tabs %>% 
+         html_nodes("table") %>%   # buscar todas as tabelas HTML
+         .[[tab]] %>%              # escolher a 'tab'-ésima
+         html_table()              # converter para um data frame
+  
+  colnames(df) <- c("Municipio", "Praia")
+  beaches = rbind(beaches, df)     # adicioná-la às tabelas já lidas
+}
+
+head(beaches)
+```
+
+*nota: os acentos mostram-se corretos no R*
+
+```{r, eval=FALSE, echo=FALSE}
+# old version using XML functions
+beaches <- data.frame(Municipio=NULL, Praia=NULL)
+
+for(tab in 1:7) {
+  df <- readHTMLTable(rawToChar(tabs$content), which=tab, stringsAsFactors=FALSE)
+  colnames(df) <- c("Municipio", "Praia")
+  
+  for(r in 1:nrow(df)) {        # ajustar informação da região
+    if (is.na(df[r,2]))
+      df[r,] <- c(df[r-1,1], df[r,1])
+  }
+  beaches = rbind(beaches, df)  # adicionar às tabelas já lidas
+}
+
+head(beaches)
+```
+
+Exercício
+========================================================
+class: small-code
+
+Como extra vamos mapear as praias num mapa de Portugal. Para isso usamos o pacote `ggmap` que é uma extensão do `ggplot2`. 
+
+Este pacote permite colocar informação em mapas geográficos e também permite encontrar as coordenadas GPS de endereços (nem sempre com sucesso...):
+
+```{r}
+library(dplyr)
+
+beaches <- tbl_df(beaches) %>% 
+           mutate(Address=paste0(Praia, ", ", Municipio, ", Portugal"))
+beaches
+```
+
+Exercício
+========================================================
+class: small-code
+
+```{r, eval=FALSE}
+library(ggmap)
+
+geo <- geocode(location = beaches$Address)
+```
+
+```{r, echo=FALSE}
+library(ggmap)
+# only to prevent the geocode() execution that takes a long time
+geo <- read.csv("data/geo-beaches.csv", header=TRUE)
+```
+
+Este processo automático não encontra todas as coordenadas. Usaremos apenas os resultados obtidos:
+
+```{r}
+head(geo, 10)
+```
+
+Exercício
+========================================================
+class: small-code
+
+Vamos juntar estes valores ao nosso _data frame_:
+
+```{r}
+beaches <- beaches %>% mutate(Lon = geo$lon,
+                              Lat = geo$lat,
+                              Address = NULL)  # remover coluna
+beaches
+```
+
+
+Exercício
+========================================================
+class: small-code
+
+E podemos usar as funcionalidades do `ggmap` para mostrar os dados obtidos:
+
+```{r, echo=FALSE, eval=FALSE}
+# alternative way
+# bounding box at http://boundingbox.klokantech.com/
+Portugal <- c(-9.43, 36.5, -6.08, 42.18)
+map <- get_map(location = Portugal) 
+```
+
+```{r}
+portugal <- 
+  get_map(location = "Portugal", zoom = 7) 
+
+map <- 
+  ggmap(portugal) + 
+  scale_x_continuous(limits=c(-9.6, -6.0)) + 
+  geom_point(data=beaches, aes(x=Lon, y=Lat)) 
+```
+
+***
+
+Eis o resultado:
+
+```{r}
+map
+```
+

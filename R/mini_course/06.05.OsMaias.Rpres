@@ -1,0 +1,299 @@
+<style>
+.small-code pre code {
+  font-size: 1em;  /* 1em = 10px */
+}
+
+/* This changes the background for slides of type exercise
+   Eg use: type: exercise (after the slide's ==== )
+*/
+
+.exercise .reveal .state-background {
+  background: #F3F3F3;
+} 
+
+.reveal {
+  font-size: 28px; /* to edit use 36px, to save use 28pt */
+}
+
+/* Defines a header to place on a two-column slide */
+
+.header {
+    color:      black; 
+    background: white;
+    position:   fixed; 
+    top:        12.5%;
+    text-align: left; 
+    width:      100%;
+}
+</style>
+
+Exercícios
+========================================================
+date: 
+autosize: true
+
+Análise de Sentimentos n'Os Maias
+========================================================
+class: small-code
+
+
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)   # instala ggplot2, dplyr, tidyr, readr, purrr, etc.
+library(tidytext)    # para análise de textos
+library(stringr)     # para manipulação de strings
+```
+
+<!-- https://blog.rstudio.org/2016/09/15/tidyverse-1-0-0/ -->
+
+Este exemplo é adaptado do livro "Tidy Text Mining with R" de Julia Silge e David Robinson.
+
+No nosso caso vamos analisar o texto d'Os Maias de Eça de Queiroz.
+
+```{r}
+os_maias <- readLines("data/senti-pt/eça.queiroz.os.maias.txt")
+```
+
+
+Conversão do texto em data frame
+========================================================
+class: small-code
+
+Vamos converter o ficheiro com o texto original numa data frame, onde cada palavra ocupa uma linha. Para além disso guardamos a que parágrafo e capítulo cada palavra pertence.
+
+```{r}
+os_maias %>% 
+  dplyr::data_frame(text=.) %>% 
+  dplyr::mutate(paragraph=row_number()) %>%                  # adiciona número parágrafo
+  dplyr::mutate(chapter=                                     # adiciona capítulo
+    cumsum(str_detect(text, regex("^capítulo [\\divxlcd]", ignore_case = TRUE)))) %>% 
+  dplyr::mutate(chapter=as.factor(chapter)) %>%              # capítulo é um valor discreto
+  tidytext::unnest_tokens(input=text, output=word, token="words") %>% 
+  dplyr::filter(!str_detect(word, "[\\d]+")) %>%             # remove números
+  dplyr::mutate(nth_word=row_number()) %>%                   # adiciona numero da palavra
+  dplyr::select(nth_word, paragraph, chapter, word) -> df    # reorganiza colunas
+
+df[470:490,]
+```
+
+Remoção de stopwords
+========================================================
+class: small-code
+
+
+As preposições e determinantes, entre outras palavras, são normalmente neutras e podemos retirá-las. Elas costumam chamar-se _stopwords_.
+
+```{r}
+readLines("data/senti-pt/stopwords_pt_large.txt", encoding="UTF-8") %>% 
+  data_frame(word=.) -> stopwords_pt
+stopwords_pt
+```
+
+
+Remoção de stopwords
+========================================================
+class: small-code
+
+
+Agora podemos eliminar estas stopwords fazendo um anti-join entre as tabelas:
+
+```{r, message=FALSE, warning=FALSE}
+df %>% 
+  dplyr::anti_join(stopwords_pt) %>%   # remove as linhas com valores de stopwords_pt
+  dplyr::arrange(nth_word) -> df2      # ordena por capítulo e parágrafo
+df2
+```
+
+Esta manipulação reduziu uma tabela com 216k entradas para uma com 108k.
+
+
+Exploração da data frame
+========================================================
+class: small-code
+
+A tabela já pode ser explorada:
+
+```{r}
+df2 %>% 
+  dplyr::count(word, sort=TRUE) %>% 
+  dplyr::filter(n > 300) %>% 
+  dplyr::mutate(word = reorder(word, n)) %>%   # reordena os factores, para visualizar
+  ggplot(aes(x=word,y=n)) +
+    geom_bar(stat = "identity") +              # usa os valores em y
+    labs(x=NULL, y="ocorrências") + 
+    coord_flip()
+```
+
+Análise de sentimentos
+========================================================
+class: small-code
+
+Uma tarefa típica na análise de texto é determinar se uma frase encerra um sentimento negativo ou positivo.
+
+Para tal, precisamos de uma classificação dos sentimentos transmitidos pelas palavras portuguesas. Felizmente, já existe um dataset, o SentiLex desenvolvido por Paula Carvalho, Mário J. Silva e João Ramalho do INESC. Vamos usá-lo aqui:
+
+```{r, message=FALSE, warning=FALSE}
+file <- readLines("data/senti-pt/SentiLex-flex-PT02.csv", encoding="UTF-8")
+head(file)
+```
+
+
+Análise de sentimentos
+========================================================
+class: small-code
+
+Primeiro precisamos de o converter para uma data frame organizada:
+
+```{r}
+read.csv2("data/senti-pt/SentiLex-flex-PT02.csv", encoding="UTF-8", header = FALSE) %>% 
+  dplyr::filter(str_detect(V1, "\\.PoS=")) %>%                # filta linhas sem info
+  tidyr::separate(V1, into=c("word","dummy"), sep=",") %>%    # busca palavra
+  tidyr::separate(V4, into=c("_","value"), sep="=") %>%       # busca valor
+  dplyr::mutate(sentiment = as.integer(value))%>%             # converte valor para inteiro
+  dplyr::select(word, sentiment) -> lex                       # fica só com estas cols
+head(lex)
+```
+
+
+Explorar o SentiLex
+========================================================
+class: small-code
+
+Podemos, antes de continuar, explorar este dataset.
+
+```{r, fig.height=3, fig.width=6}
+lex %>% 
+  dplyr::mutate(sentiment = as.factor(sentiment)) %>% 
+  dplyr::group_by(sentiment) %>% 
+  dplyr::summarise(count = n()) %>% 
+  dplyr::filter(abs(count)>2) %>%       # remove alguns outliers
+  ggplot(aes(sentiment, count)) +
+    geom_bar(stat = "identity", show.legend = FALSE) + coord_flip()
+```
+
+Notamos que existem bastante mais palavras negativas que positivas. Será isto uma característica do Português?
+
+Anexar os sentimentos às palavras do romance
+========================================================
+class: small-code
+
+Agora podemos adicionar o valor sentimental de cada palavra n'Os Maias que pertença ao léxico:
+
+```{r, message=FALSE}
+df2 %>% 
+  dplyr::inner_join(lex)
+```
+
+Exploração do data frame
+========================================================
+class: small-code
+
+Quais as palavras mais negativas no romance?
+
+```{r, message=FALSE, warning=FALSE, eval=FALSE}
+df2 %>% 
+  dplyr::inner_join(lex) %>%                          # junta sentimento da palavra
+  dplyr::count(word, sentiment, sort=TRUE) %>%        # conta ocorrências de cada palavra
+  dplyr::ungroup() %>%                                # desagrupa a contagem anterior
+  dplyr::filter(sentiment!=0) %>%                     # remove palavras neutras
+  dplyr::filter(n>40) %>%                             # filtra as pouco frequentes
+  dplyr::mutate(n=ifelse(sentiment==-1,-n,n)) %>%     # troca sinal das ocorr. negativas
+  dplyr::mutate(sentiment=as.factor(sentiment)) %>%   # torna sentimento um valor discreto
+  dplyr::mutate(word=reorder(word,n)) %>%             # reordea palavras para o ggplot
+  ggplot(aes(word, n, fill=sentiment)) +
+    geom_bar(alpha = 0.8, stat = "identity") +
+    labs(y = "Contribution to sentiment", x = NULL) +
+    coord_flip()
+```
+
+
+Exploração do data frame
+========================================================
+class: small-code
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+df2 %>% 
+  dplyr::inner_join(lex) %>%                          # junta sentimento da palavra
+  dplyr::count(word, sentiment, sort=TRUE) %>%        # conta ocorrências de cada palavra
+  dplyr::ungroup() %>%                                # desagrupa a contagem anterior
+  dplyr::filter(sentiment!=0) %>%                     # remove palavras neutras
+  dplyr::filter(n>40) %>%                             # filtra as pouco frequentes
+  dplyr::mutate(n=ifelse(sentiment==-1,-n,n)) %>%     # troca sinal das ocorr. negativas
+  dplyr::mutate(sentiment=as.factor(sentiment)) %>%   # torna sentimento um valor discreto
+  dplyr::mutate(word=reorder(word,n)) %>%             # reordea palavras para o ggplot
+  ggplot(aes(word, n, fill=sentiment)) +
+    geom_bar(alpha = 0.8, stat = "identity") +
+    labs(y = "Contribution to sentiment", x = NULL) +
+    coord_flip()
+```
+
+***
+
+No geral, as atribuições parecem fazer sentido. Esta é uma forma de ganharmos confiança nas análises seguintes.
+
+
+Trajectória sentimental d'Os Maias
+========================================================
+class: small-code
+
+Queremos mostrar como o sentimento se desenrola ao longo do livro. Para evitar tornar o gráfico excessivamente comprido, somam-se os sentimentos de cada parágrafo por capítulo:
+
+```{r, message=FALSE}
+df2 %>% 
+  dplyr::inner_join(lex) %>% 
+  dplyr::group_by(chapter, paragraph) %>% 
+  dplyr::summarise(overall_sentiment=sum(sentiment)) -> sentiments_paragraph
+sentiments_paragraph
+```
+
+Trajectória sentimental d'Os Maias
+========================================================
+class: small-code
+
+Vejamos como decorrem os 18 capítulos do romance.
+
+```{r, message=FALSE, warning=FALSE, eval=FALSE}
+sentiments_paragraph %>% 
+  ggplot(aes(paragraph, overall_sentiment, fill=chapter)) + theme_bw() +
+    geom_bar(stat = "identity", show.legend = FALSE) +
+    facet_wrap(~chapter, ncol=3, scales="free_x")
+```
+
+Trajectória sentimental d'Os Maias
+========================================================
+class: small-code
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE, fig.heigth=40, fig.width=20}
+sentiments_paragraph %>% 
+  dplyr::filter(as.integer(chapter)>9) %>% 
+  ggplot(aes(paragraph, overall_sentiment, fill=chapter)) + theme_bw() +
+    geom_bar(stat = "identity", show.legend = FALSE) +
+    facet_wrap(~chapter, ncol=3, scales="free_x")
+```
+
+Trajectória sentimental d'Os Maias
+========================================================
+class: small-code
+left: 65%
+
+E podemos fazer o mesmo para cada capítulo (calculando o sentimento médio por parágrafo):
+
+```{r, message=FALSE, warning=FALSE, eval=FALSE}
+sentiments_paragraph %>% 
+  summarise(chapter_sentiment = mean(overall_sentiment)) %>% 
+  ggplot(aes(chapter, chapter_sentiment)) + theme_bw() +
+    geom_bar(stat = "identity", show.legend = FALSE) +
+    xlab("capítulos") + ylab("sentimento médio")
+```
+
+No capítulo 4, Carlos da Maia forma-se em Medicina e viaja pela Europa. Segundo a análise é o capítulo mais positivo. O capítulo 17 é onde se descobre o segredo trágico da relação entre Carlos e Maria. Este é, sem surpresas, o capítulo mais negativo da obra.
+
+***
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+sentiments_paragraph %>% 
+  dplyr::summarise(chapter_sentiment = mean(overall_sentiment)) %>% 
+  ggplot(aes(chapter, chapter_sentiment)) + theme_bw() +
+    geom_bar(stat = "identity", show.legend = FALSE) +
+    xlab("capítulos") + ylab("sentimento médio")
+```
+

@@ -1,0 +1,4 @@
+# sample data file with fixed width
+001 0943 AVFT
+002 1465 ATRE
+003 9821 TREW

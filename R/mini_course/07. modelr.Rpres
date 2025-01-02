@@ -1,0 +1,330 @@
+<style>
+.small-code pre code {
+  font-size: 1em;  /* 1em = 10px */
+}
+
+/* This changes the background for slides of type exercise
+   Eg use: type: exercise (after the slide's ==== )
+*/
+
+.exercise .reveal .state-background {
+  background: #F3F3F3;
+} 
+
+/* Defines a header to place on a two-column slide */
+
+.header {
+    color:      black; 
+    background: white;
+    position:   fixed; 
+    top:        12.5%;
+    text-align: left; 
+    width:      100%;
+}
+
+.reveal {
+  font-size: 28px; /* to edit use 36px, to save use 28pt */
+}
+
+/* This places images where we want. Eg use:
+  <div class="midcenter" style="margin-left:-300px; margin-top:-300px;">
+     <img src="flowchart_600x600.png"></img>
+  </div>
+*/
+
+.midcenter { 
+    position: fixed;
+    top:      50%;
+    left:     50%;
+}
+
+</style>
+
+Manipulação de Dados e Modelos
+========================================================
+autosize: true
+
+```{r setup, include=FALSE}
+# If you run into problems with cached output you can always use the Clear Knitr Cache command on the More menu to rebuild your presentation without previously cached output.
+opts_chunk$set(cache=TRUE)
+```
+
+Introdução
+========================================================
+class: small-code
+
++ O pacote `modelr` disponibiliza funções que permitem o uso de modelos dentro dos fluxos de dados.
+
+```{r, echo=FALSE}
+library(tidyverse)
+library(modelr)
+library(broom)
+```
+
+
+```{r, height=8}
+model.fit <- lm(mpg ~ wt, data=mtcars) # fazemos uma regressão linear
+ggplot(mtcars, aes(x=wt, y=mpg)) + theme_bw() +
+  geom_point() +
+  geom_abline(slope = coef(model.fit)[2], intercept = coef(model.fit)[1], color="red")
+```
+
+Introdução
+========================================================
+class: small-code
+
+O pacote permite juntar a previsão e o residual à data frame original
+
+```{r}
+mtcars %>% 
+  add_predictions(model.fit)  %>%  # são adicionas novas colunas
+  add_residuals(model.fit)  -> df
+
+ggplot(df, aes(x=wt, y=mpg)) + theme_bw() +
+  geom_point() +
+  geom_abline(slope = coef(model.fit)[2], intercept = coef(model.fit)[1], color="red") +
+  geom_segment(aes(x=wt, y=pred, xend=wt, yend=pred+resid), color="orange")
+```
+
+
+Organizar dados por data frames
+========================================================
+class: small-code
+
+O data frame gapminder tem um sumário da esperança média de vida e do PIB pe capita, ao longo dos anos, para vários países do mundo:
+
+```{r}
+library(gapminder)
+gapminder
+```
+
+Organizar dados por data frames
+========================================================
+class: small-code
+
+Podemos fazer as regressões lineares para todos os paises, mas o resultado é obscuro por haver demasiados modelos:
+
+```{r}
+gapminder %>% 
+  ggplot(aes(year, lifeExp, group = country)) + theme_bw() +
+  geom_line(alpha = 1/3)
+```
+
+Organizar dados por data frames
+========================================================
+class: small-code
+
+Para um país pode visualizar-se bem a regressão linear:
+
+```{r, eval=FALSE}
+pt <- dplyr::filter(gapminder, country == "Portugal")
+pt %>% 
+  ggplot(aes(year, lifeExp)) +  theme_bw() +
+  geom_line() + 
+  ggtitle("Full data = ")
+
+pt_mod <- lm(lifeExp ~ year, data = pt)
+pt %>% 
+  add_predictions(pt_mod) %>%
+  ggplot(aes(year, pred)) +  theme_bw() +
+  geom_line() + 
+  ggtitle("Linear trend + ")
+
+pt %>% 
+  add_residuals(pt_mod) %>% 
+  ggplot(aes(year, resid)) +  theme_bw() +
+  geom_hline(yintercept = 0, colour = "white", size = 3) + 
+  ylim(-20, 20) +
+  geom_line() + 
+  ggtitle("Remaining pattern")
+```
+
+Organizar dados por data frames
+========================================================
+class: small-code
+
+```{r, echo=FALSE, fig.width=4}
+pt <- dplyr::filter(gapminder, country == "Portugal")
+pt %>% 
+  ggplot(aes(year, lifeExp)) +  theme_bw() +
+  geom_line() + 
+  ggtitle("Full data = ")
+
+pt_mod <- lm(lifeExp ~ year, data = pt)
+pt %>% 
+  add_predictions(pt_mod) %>%
+  ggplot(aes(year, pred)) +  theme_bw() +
+  geom_line() + 
+  ggtitle("Linear trend + ")
+
+pt %>% 
+  add_residuals(pt_mod) %>% 
+  ggplot(aes(year, resid)) +  theme_bw() +
+  geom_hline(yintercept = 0, colour = "white", size = 3) + 
+  ylim(-20, 20) +
+  geom_line() + 
+  ggtitle("Remaining pattern")
+```
+
+Mas como fazer para todos os países?
+
+Organizar dados por data frames
+========================================================
+class: small-code
+
+A função `nest` cria um data frame com os dados de cada grupo que recebe:
+
+```{r}
+gapminder %>% 
+  group_by(country, continent) %>% 
+  tidyr::nest() -> by_country
+by_country
+```
+
+Organizar dados por data frames
+========================================================
+class: small-code
+
+Vejamos a primeira data frame com os dados do Afeganistão:
+
+```{r}
+by_country[1,]$data[[1]]
+```
+
+Organizar modelos por data frames
+========================================================
+class: small-code
+
+Agora temos os dados que queremos modelar com regressão linear, organizados por linhas.
+Seja a seguinte função que aplica a regressão:
+
+```{r}
+country_model <- function(df) {
+  lm(lifeExp ~ year, data = df)
+}
+```
+
+Como aplicar a todos os países?
+
+```{r}
+by_country %>% 
+  dplyr::mutate(model = purrr::map(data, country_model)) -> by_country
+```
+
+Organizar modelos por data frames
+========================================================
+class: small-code
+
+Ou seja, colocámos os modelos na data frame inicial!
+
+```{r}
+by_country
+```
+
+Isto é especialmente útil porque mantemos tudo organizado no mesmo data frame.
+
+Organizar modelos por data frames
+========================================================
+class: small-code
+
+Podemos juntar os resíduos de cada modelo na própria data frame:
+
+```{r}
+by_country %>% 
+  dplyr::mutate( resids = purrr::map2(data, model, modelr::add_residuals) ) -> by_country
+by_country
+```
+
+Organizar modelos por data frames
+========================================================
+class: small-code
+
+Um exemplo de uso deste data frame: mostrar os residuos para cada continente:
+
+```{r, fig.width=12}
+by_country %>% 
+  unnest(resids) %>%    # transforma-a numa data frame simples
+  ggplot(aes(year, resid, group = country)) + theme_bw() +
+  geom_line(alpha = 1 / 3) + 
+  facet_wrap(~continent)
+```
+
+O modelo linear não representa bem a dinâmica de Africa.
+
+
+O pacote `broom`
+========================================================
+class: small-code
+
+Podemos querer analisar a qualidade dos modelos que criámos. O pacote `broom` ajuda-nos nessa tarefa, pois dá-nos funcionalidades de ir buscar informação aos modelos do R de forma organizada:
+
+```{r}
+broom::glance(pt_mod)   # glance() recolhe diversas medidas de qualidade
+```
+
+O pacote `broom`
+========================================================
+class: small-code
+
+Então podemos adicionar estas medidas à nossa data frame:
+
+```{r}
+by_country %>% 
+  mutate(glance = map(model, broom::glance)) %>% 
+  unnest(glance) -> glance
+glance
+```
+
+Exploração dos modelos
+========================================================
+class: small-code
+
+Vejamos por exemplo a medida $R^2$:
+
+```{r}
+glance %>% 
+  ggplot(aes(continent, r.squared)) + theme_bw() +
+  geom_jitter(width = 0.5)
+```
+
+Exploração dos modelos
+========================================================
+class: small-code
+
+Quais são os países onde a hipótese linear é menos adequada?
+
+```{r}
+bad_fit <- dplyr::filter(glance, r.squared < 0.25)
+
+gapminder %>% 
+  dplyr::semi_join(bad_fit, by = "country") %>% 
+  ggplot(aes(year, lifeExp, colour = country)) + theme_bw() +
+    geom_line()
+```
+
+Estes são efeitos da tragédia da SIDA e do genocídio no Ruanda.
+
+O pacote `broom`
+========================================================
+class: small-code
+
+O pacote também pode organizar os dados com uma linha por cada coeficiente do modelo:
+
+```{r}
+by_country %>% 
+  mutate(tidy = map(model, broom::tidy)) %>% 
+  unnest(tidy)
+```
+
+O pacote `broom`
+========================================================
+class: small-code
+
+A função augment atribui a cada linha as respectivas estatísticas, como residuais:
+
+```{r}
+by_country %>% 
+  mutate(augm = map(model, broom::augment)) %>% 
+  unnest(augm)
+```
+

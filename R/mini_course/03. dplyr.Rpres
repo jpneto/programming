@@ -1,0 +1,574 @@
+<style>
+.small-code pre code {
+  font-size: 1em;  /* 1em = 10px */
+}
+
+/* This changes the background for slides of type exercise
+   Eg use: type: exercise (after the slide's ==== )
+*/
+
+.exercise .reveal .state-background {
+  background: #F3F3F3;
+} 
+
+/* Defines a header to place on a two-column slide */
+
+.header {
+    color:      black; 
+    background: white;
+    position:   fixed; 
+    top:        12.5%;
+    text-align: left; 
+    width:      100%;
+}
+
+.reveal {
+  font-size: 28px; /* to edit use 36px, to save use 28pt */
+}
+
+/* This places images where we want. Eg use:
+  <div class="midcenter" style="margin-left:-300px; margin-top:-300px;">
+     <img src="flowchart_600x600.png"></img>
+  </div>
+*/
+
+.midcenter { 
+    position: fixed;
+    top:      50%;
+    left:     50%;
+}
+
+</style>
+
+Manipulação de Dados
+========================================================
+autosize: true
+
+```{r setup, include=FALSE}
+# If you run into problems with cached output you can always use the Clear Knitr Cache command on the More menu to rebuild your presentation without previously cached output.
+opts_chunk$set(cache=TRUE)
+```
+
+Introdução
+========================================================
+
++ Neste contexto, uma das tarefas mais consumidoras de tempo é a preparação dos dados
+
++ Esta tarefa inclui a recolha dos dados, a sua restruturação para um formato adequado, a exploração de padrões através da visualização preliminar dos dados (o que poderíamos designar por análise de dados exploratória)
+
++ É importante usar ferramentas que nos permitam ter ganhos de eficiência nestes passos, antes de passarmos à importante fase da modelação
+
++ O R possui várias bibliotecas adequadas a cada um destes passos (como observámos na importação da dados)
+
++ Vamos agora discutir uma biblioteca muito útil na restruturação/manipulação de dados
+
+O pacote `dplyr` 
+========================================================
+class: small-code
+
+O pacote `dplyr` é utilizado para manipular data frames de forma rápida e conveniente.
+
+```{r}
+library(dplyr)
+library(MASS)
+
+my.data <- tbl_df(Boston[,1:10])  # converte o data frame num formato similar
+my.data
+```
+
+Verbo: filter
+========================================================
+class: small-code
+
+No `dplyr` verbos são acções de manipulação. Um dos verbos designa-se `filter` e seleciona linhas segundo o critério dado:
+
+```{r}
+dplyr::filter(my.data, rad==4)
+```
+
+Nota: Usando fluxos de dados
+========================================================
+class: small-code
+
+Vamos utilizar o operador `%>%` que passa o fluxo de dados para a instrução seguinte.
+
+O código anterior passa a ser escrito assim:
+
+```{r}
+my.data %>% dplyr::filter(rad==4)
+```
+
+Nota: Usando fluxos de dados
+========================================================
+class: small-code
+
+Alguns exemplos de uso do operador `%>%`:
+
+```{r, collapse=TRUE}
+1:10 %>% sum()             # igual a sum(1:10)
+1:10 %>% cumsum()
+1:10 %>% cumsum() %>% diff()
+1:10 %>% cumsum() %>% diff() %>% sum()
+c(2,2,2) %>% `^`(3:5)      # igual a 2^3, 2^4, 2^5
+c(2,2,2) %>% `^`(3:5, .)   # igual a 3^2, 4^2, 5^2
+3:5 %>% `*`(.,.)           # igual a 3*3, 4*4, 5*5
+```
+
+Verbo: Arrange
+========================================================
+class: small-code
+
+Podemos ordenar os dados por colunas:
+
+```{r}
+my.data %>% arrange(rad, desc(tax), age)
+```
+
+Verbo: Select
+========================================================
+class: small-code
+
+Podemos escolher apenas algumas das colunas disponíveis:
+
+```{r}
+my.data %>% dplyr::select(rad, age)  # o pacote MASS também tem uma funcão select
+```
+
+Verbo: Select
+========================================================
+class: small-code
+
+Podemos escolher um intervalo de colunas:
+
+```{r}
+my.data %>% dplyr::select(nox:dis)  
+```
+
+
+Verbo: Select
+========================================================
+class: small-code
+
+Ou até usar critérios mais complexos:
+
+```{r}
+my.data %>% dplyr::select(-matches('^[cr]'))  # não começa por c ou r
+```
+
+Verbo: mutate
+========================================================
+class: small-code
+
+Adicionar novas colunas como função de outras:
+
+```{r}
+my.data %>% 
+  mutate(twice.age = 2*age, 
+         new.col   = sqrt(twice.age),
+         good.age  = factor(ifelse(age>50,"good","bad"))) %>%  
+  dplyr::select(age:good.age)
+```
+
+Verbo: summarise
+========================================================
+class: small-code
+
+Podemos fazer resumos dos dados:
+
+```{r}
+my.data %>% summarise(mean.age = mean(age, na.rm = TRUE),
+                      sd.age   =   sd(age, na.rm = TRUE))
+```
+
+Verbo: slice
+========================================================
+class: small-code
+
+Este verbo permite selecionar linhas:
+
+```{r}
+my.data %>% slice(c(2:6,10,n()))  # n() representa a última linha
+```
+
+Extrair linhas únicas
+========================================================
+class: small-code
+
+Podemos ir buscar os valores únicos de uma dada coluna:
+
+```{r} 
+my.data %>% 
+  dplyr::select(tax) %>%    # selecionar as taxas
+  distinct(tax) %>%         # escolher as distintas
+  arrange(tax) %>%          # ordená-las
+  as.list()                 # transformar em lista
+```
+
+Amostragem
+========================================================
+class: small-code
+
+O pacote permite realizar amostragem de forma sucinta:
+
+```{r, eval=FALSE} 
+sample_n(my.data, 6)                     # amostra com 6 linhas
+sample_frac(my.data, .03)                # amostra com 3% dos dados
+sample_frac(my.data, .03, replace=TRUE ) # amostra com bootstrap
+
+sample_n(my.data[1:5,], size=10, weight=5:1, replace=TRUE) # amostragem ponderada
+```
+
+Operações em Grupos
+========================================================
+class: small-code
+
+É possível dividir a tabela em grupos -- dado um critério -- de modo a repetir uma operação sobre os vários grupos:
+
+```{r} 
+my.data %>%
+  group_by(tax) %>%                  # agrupar por taxas iguais
+  summarise(count=n(), mean.age=mean(age, na.rm=TRUE)) 
+```
+
+Operações em Grupos
+========================================================
+class: small-code
+
+Existem várias operações disponíveis:
+
+```{r} 
+my.data %>%
+  group_by(rad) %>%
+  summarise(n.taxes    = n(), 
+            diff.taxes = n_distinct(tax), 
+            min.tax    = min(tax), 
+            median.tax = median(tax),
+            max.tax    = max(tax))
+```
+
+
+Operações em Grupos
+========================================================
+class: small-code
+
+É mesmo possível usar as nossas próprias funções:
+
+```{r} 
+my.mode <- function(x) {
+  ux <- unique(x)
+  ux[which.max(tabulate(match(x, ux)))]
+}
+
+my.data %>%
+  group_by(rad) %>%
+  summarise(mode = my.mode(tax))
+```
+
+Operações em Grupos
+========================================================
+class: small-code
+
+Os grupos podem ter subgrupos:
+
+```{r} 
+my.data %>%
+  group_by(tax, rad) %>%  # cada grupo taxa tem subgrupos rad
+  summarise(size=n()) %>%
+  arrange(tax)
+```
+
+Operações em Grupos
+========================================================
+class: small-code
+
+<div class="header">Por cada `summarise` desaparece um nível de subgrupo:</div>
+
+<br>
+
+```{r, echo=TRUE} 
+my.data %>%
+  group_by(tax, rad) %>%
+  summarise(size=n())
+```
+
+*** 
+
+<br>
+
+```{r} 
+my.data %>%
+  group_by(tax, rad) %>%  
+  summarise(size=n()) %>%
+  summarise(sum=sum(size))
+```
+
+Exercícios
+========================================================
+class: small-code
+type: exercise
+
+Carregar a seguinte tabela do <span style="color:black">[Bureau of Transportation Statistics](http://www.transtats.bts.gov/DatabaseInfo.asp?DB_ID=120&Link=0)</span>:
+
+```{r}
+library(nycflights13)    # install.packages("nycflights13")
+flights
+```
+
+Exercícios: filter
+========================================================
+class: small-code
+type: exercise
+
+Ver os voos do dia 1 de Janeiro:
+
+```{r, echo=FALSE}
+flights %>% filter(month==1, day==1)
+```
+
+Exercícios: filter
+========================================================
+class: small-code
+type: exercise
+
+Ver os voos de Novembro e Dezembro (operador pertença é dado por `%in%`):
+
+```{r, echo=FALSE}
+flights %>% filter(month %in% c(11,12))
+```
+
+
+Exercícios: filter
+========================================================
+class: small-code
+type: exercise
+
+Ver os voos que não partiram ou chegaram atrasados mais que 15 minutos (operadores lógicos dados por `!`, `&` e `|`):
+
+```{r, echo=FALSE}
+flights %>% filter(!(arr_delay > 15 | dep_delay > 15))
+```
+
+Exercícios: filter
+========================================================
+class: small-code
+type: exercise
+
+Que voos não possuem a ordem de partida? Usar a função `is.na()`.
+
+```{r, echo=FALSE}
+flights %>% filter(is.na(dep_time))
+```
+
+Exercícios: arrange
+========================================================
+class: small-code
+type: exercise
+
+Ordenar decrescentemente por atraso à chegada:
+
+```{r, echo=FALSE}
+flights %>% arrange(desc(dep_delay))
+```
+
+Exercícios: select
+========================================================
+class: small-code
+type: exercise
+
+Selecionar apenas as datas dos voos:
+
+```{r, echo=FALSE}
+flights %>% dplyr::select(year:day)
+```
+
+Exercícios: mutate
+========================================================
+class: small-code
+type: exercise
+
+Ordenar os voos por maior recuperação de tempo por distancia:
+
+```{r, echo=FALSE}
+flights %>% 
+  dplyr::select(flight, ends_with("delay"), distance, air_time) %>%
+  mutate(gain=arr_delay-dep_delay, 
+         gain_rate = gain / (air_time / 60)) %>%
+  arrange(gain_rate)
+```
+
+Exercícios: group_by e summarise
+========================================================
+left: 40%
+class: small-code
+type: exercise
+
+<div class="header" style="background: #F3F3F3">Calcular a recuperação do atraso inicial por companhia aérea:</div>
+
+<br><br>
+
+```{r, echo=FALSE}
+flights %>% 
+  dplyr::select(carrier, ends_with("delay")) %>%
+  mutate(gain=arr_delay-dep_delay) %>%
+  group_by(carrier) %>%
+  summarise(mean.gain=round(mean(gain, na.rm=TRUE),2)) -> df
+df
+```
+
+***
+
+<br>
+
+```{r, echo=FALSE}
+library(ggplot2) # format info at http://www.cookbook-r.com/Graphs/
+
+ggplot(df, aes(x=carrier, y=mean.gain)) +
+  geom_bar(stat="identity") +
+  coord_flip() + 
+  theme(axis.text.y  = element_text(size=12)) +
+  theme_bw()
+```
+
+Exercícios: group_by e summarise
+========================================================
+class: small-code
+type: exercise
+
+Contar quantos voos houve por cada dia do ano:
+
+```{r, echo=FALSE}
+flights %>% 
+  dplyr::select(year:day) %>%
+  mutate(dep.date = paste(year,
+                          formatC(month,width=2,flag='0'),
+                          formatC(day  ,width=2,flag='0'), sep='-')) %>%
+  group_by(dep.date) %>%
+  summarise(count=n())
+```
+
+Exercícios: group_by e summarise
+========================================================
+left: 45%
+class: small-code
+type: exercise
+
+<div class="header" style="background: #F3F3F3">Calcular o atraso médio por cada voo:</div>
+
+<br>
+
+```{r, echo=FALSE}
+flights %>% 
+  filter(!is.na(dep_delay), !is.na(arr_delay)) %>%
+  group_by(tailnum) %>% 
+  summarise(delay = round(mean(arr_delay),3), count=n())
+```
+
+***
+
+<br>
+
+```{r, echo=FALSE, fig.width = 8}
+flights %>% 
+  filter(!is.na(dep_delay), !is.na(arr_delay)) %>%
+  group_by(tailnum) %>% 
+  summarise(delay = mean(arr_delay), count=n()) %>%
+  ggplot(aes(delay)) + 
+    geom_histogram(binwidth = 10) + 
+    theme_bw() +
+    theme(axis.text.y  = element_text(size=20),
+          axis.text.x  = element_text(size=20),
+          axis.title.x = element_text(size=20),
+          axis.title.y = element_text(size=20))
+```
+
+continuação...
+========================================================
+class: small-code
+
+O histograma anterior mostra a existência de atrasos médios muito grandes (há voos com mais de 300 minutos de atraso!). Mas se usarmos outra visualização verificamos que isso ocorre quando o número de amostras por voo é pequeno:
+
+```{r, echo=FALSE, fig.width = 21, fig.heigth=10}
+flights %>% 
+  filter(!is.na(dep_delay), !is.na(arr_delay)) %>%
+  group_by(tailnum) %>% 
+  summarise(delay = mean(arr_delay), count=n()) %>%
+  ggplot(aes(count, delay)) + 
+    theme_bw() +
+    theme(axis.text.y  = element_text(size=20),
+          axis.text.x  = element_text(size=20),
+          axis.title.x = element_text(size=20),
+          axis.title.y = element_text(size=20)) +
+    geom_point()
+```
+
+
+Exemplo: Manipular e visualizar
+========================================================
+class: small-code
+
+Queremos estudar o atraso médio para cada destino em relação à sua distância:
+
+```{r, eval=FALSE}
+flights %>% 
+  group_by(dest) %>% 
+  summarise(
+    count = n(),
+    dist = mean(distance, na.rm = TRUE),
+    delay = mean(arr_delay, na.rm = TRUE)) %>% 
+  filter(count > 20)            # apenas voos com suficiente amostras
+```
+
+```{r, echo=FALSE}
+# dest != "HNL" : retirar Honolulu pq tem uma distancia muito maior q as outras
+flights %>% 
+  group_by(dest) %>% 
+  summarise(
+    count = n(),
+    dist = mean(distance, na.rm = TRUE),
+    delay = mean(arr_delay, na.rm = TRUE)) %>% 
+  filter(count > 20, dest != "HNL") -> df
+
+df
+```
+
+Exemplo: Manipular e visualizar
+========================================================
+class: small-code
+
+```{r, echo=FALSE, fig.width = 18, fig.height = 9}
+ggplot(df, aes(dist, delay)) +
+  geom_point(aes(size = count), alpha = 1/4) +
+  geom_smooth(se = FALSE) + 
+  theme_bw() + 
+  theme(axis.text.y  = element_text(size=20),
+        axis.text.x  = element_text(size=20),
+        axis.title.x = element_text(size=20),
+        axis.title.y = element_text(size=20)) 
+```
+
+Fundir data frames
+========================================================
+class: small-code
+
+<div class="header">O pacote `dplyr` pode fundir tabelas usando as suas instruções <b>join</b>:</div>
+
+<br>
+
+```{r, collapse=TRUE}
+df1 <- data.frame(id=1:3, m1=c(.1,.2,.3))
+df2 <- data.frame(id=2:4, m2=letters[1:3])
+df1
+df2
+left_join(df1,df2,by="id")
+```
+
+***
+
+<br>
+
+```{r, collapse=TRUE}
+right_join(df1,df2,by="id")
+inner_join(df1,df2,by="id")
+full_join(df1,df2,by="id")
+```
+

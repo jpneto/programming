@@ -1,0 +1,431 @@
+<style>
+.small-code pre code {
+  font-size: 1em;  /* 1em = 10px */
+}
+
+/* This changes the background for slides of type exercise
+   Eg use: type: exercise (after the slide's ==== )
+*/
+
+.exercise .reveal .state-background {
+  background: #F3F3F3;
+} 
+
+.reveal {
+  font-size: 28px; /* to edit use 36px, to save use 28pt */
+}
+
+/* Defines a header to place on a two-column slide */
+
+.header {
+    color:      black; 
+    background: white;
+    position:   fixed; 
+    top:        12.5%;
+    text-align: left; 
+    width:      100%;
+}
+</style>
+
+Visualização de Dados
+========================================================
+autosize: true
+
+Visualização de Dados
+========================================================
+
+Não se deve menosprezar a nossa capacidade para detectar padrões em dados.
+
+```{r, echo=FALSE}
+set.seed(120)
+n <- 25
+thetas <- runif(n, -2*pi, 2*pi)
+points <- data.frame(x=sin(thetas), y=cos(thetas))
+points <- round(points,3)
+points
+```
+
+Apresentados neste formato é difícil discernir padrões, mas...
+
+Visualização de Dados
+========================================================
+
+<div class="header">A melhor forma para o cérebro detectar padrões é através do uso de gráficos:</div>
+
+<br><br><br>
+
+
+```{r, echo=FALSE}
+points
+```
+
+
+***
+
+<br><br><br>
+
+```{r, echo=FALSE}
+library(ggplot2)
+
+ggplot(data=points) + 
+  geom_point(mapping=aes(x=x, y=y)) +
+  theme_bw()
+```
+
+
+Pacote ggplot2
+========================================================
+
+As funções base do R possuem múltiplas funções para visualização: `plot`, `hist`, ... 
+
+Aqui iremos usar o pacote `ggplot2` que fornece uma gramática para a construção de gráficos.
+
+```{r}
+# install.packages("ggplot2")
+library(ggplot2)
+```
+
+O gráfico anterior foi construído pelo seguinte código:
+
+```{r, eval=FALSE}
+ggplot(data=points) + 
+  geom_point(mapping=aes(x=x, y=y)) +
+  theme_bw()
+```
+
+onde o operador **+** tem um funcionamento similar ao operador **%>%**.
+
+
+Conceitos
+========================================================
+
+Estes são os conceitos importantes da gramática de gráficos implementada pelo pacote `ggplot2`:
+
++ Estéticas (**aes**) -- descrevem qual o aspecto dos dados: a sua cor, forma, posição vertical ou horizontal
+
++ Objectos geométricos (**geoms**) -- objectos que se vêm no gráfico, como linhas ou pontos
+
++ Estatísticas (**stats**) -- são sumários dos dados
+
++ Escalas (**scales**) -- são funções que mapeiam os dados nas estéticas (eg, definir eixos lineares ou logarítmicos), para cada estética tem de haver uma escala
+
++ Sistemas de coordenadas (**coord**)
+
++ Facetas (**facets**) -- que permitem separar os dados em subcategorias, cada uma com um gráfico associado
+
+Um exemplo de dados: Diamonds
+========================================================
+class: small-code
+
+Este dataset está incluído no pacote `ggplot2` e contém 54000 diamantes com vários atributos e respectivo preço:
+
+```{r}
+set.seed(101)
+d <- diamonds[sample(nrow(diamonds), 100), ]  # usar apenas alguns exemplos do dataset
+head(d, 12)
+```
+
+Criar um objeto gráfico com ggplot
+========================================================
+class: small-code
+
+A função `ggplot` cria um gráfico mas ainda sem visualização:
+
+```{r, fig.height=4}
+ggplot(d, aes(carat, price, colour=cut))
+```
+
+Já foi fornecida uma estética: a cor de cada diamante é determinada pela variável categórica `cut`.
+
+Mas ainda não estabelecemos qual o objecto gráfico, qual o **geom**, que queremos.
+
+Aplicar um objecto geométrico
+========================================================
+class: small-code
+
+Podemos definir o **geom** como sendo pontos:
+
+```{r}
+ggplot(d, aes(carat,price,colour=cut)) +
+  geom_point()
+```
+
+***
+
+Ou podemos definir o **geom** como sendo linhas:
+
+```{r}
+ggplot(d, aes(carat,price,colour=cut)) +
+  geom_line()
+```
+
+Aplicar mais que um geom
+========================================================
+class: small-code
+
+Ou podemos aplicar os dois geoms anteriores ao mesmo tempo:
+
+```{r, fig.width=18}
+ggplot(d, aes(carat, price, colour=cut)) +
+  geom_point(aes(size=price)) +
+  geom_line()
+```
+
+Aplicar mais que um geom
+========================================================
+class: small-code
+
+Outro exemplo:
+
+```{r, fig.width=18}
+ggplot(d, aes(x*y*z, price)) +   # x*y*z é uma aproximação do volume do diamante
+  geom_point(aes(shape=cut)) +
+  geom_smooth(level=0.95)
+```
+
+O geom `geom_smooth` cria automaticamente um intervalo de confiança com o nível desejado.
+
+Aplicar mais que um geom
+========================================================
+
+O mesmo exemplo mas salientando a qualidade do diamante:
+
+```{r, fig.width=18}
+ggplot(d, aes(x*y*z, price)) +
+  geom_point(aes(colour=cut), size=1.5) +
+  geom_smooth(level=0.95)
+```
+
+Separar em grupos
+========================================================
+
+Podemos separar os dados em grupos distintos (no exemplo seguinte dividimos por qualidade do corte) e podemos visualizar cada grupo de forma distinta (por exemplo, com cores ou padrões diferentes):
+
+```{r, fig.width=18}
+ggplot(d, aes(carat, price, colour=cut, group=cut)) +
+  geom_point() +
+  geom_smooth(method="lm", level=0.5)
+```
+
+Separar em grupos
+========================================================
+
+Outro exemplo. Neste caso o geom `geom_boxplot` faz o agrupamento automaticamente:
+
+```{r, fig.width=18}
+ggplot(d, aes(cut, price)) +
+  geom_boxplot() 
+```
+
+Restringir os dados
+========================================================
+
+É também possível restringir os dados num geom. Aqui apenas fazemos a regressão linear para os diamantes com corte ideal:
+
+```{r, fig.width=18}
+ggplot(d, aes(carat, price)) +
+  geom_point(aes(colour=cut)) +
+  geom_smooth(data=subset(d, cut=="Ideal"), method="lm")
+```
+
+O geom gráfico de barras
+========================================================
+
+Este geom produz um gráfico de barras:
+
+```{r, fig.width=18}
+ggplot(diamonds) + 
+  geom_bar(aes(x=cut, fill=cut))
+```
+
+O geom gráfico de barras
+========================================================
+
+Se dermos ao argumento `fill` outro campo, o ggplot2 faz um gráfico de barras empilhado:
+
+```{r, fig.width=18}
+ggplot(diamonds) + 
+  geom_bar(aes(x=cut, fill=clarity))
+```
+
+O geom gráfico de barras
+========================================================
+
+Se, no entanto, quisermos as barras ao lado umas das outras é preciso explorar outras opções:
+
+```{r, fig.width=18}
+ggplot(diamonds) + 
+  geom_bar(aes(x=cut, fill=clarity), position="dodge")
+```
+
+Nota: existem muitas opções e é preciso explorar os ficheiros de ajuda, livros ou tutoriais na internet para encontrar o que queremos.
+
+O geom histograma
+========================================================
+
+```{r, fig.width=12}
+ggplot(diamonds, aes(x=carat)) +
+  geom_histogram(binwidth=0.1, fill="steelblue") 
+```
+
+O geom densidade
+========================================================
+
+```{r, fig.width=12}
+ggplot(d, aes(x=carat)) +
+  geom_density() 
+```
+
+Conectar objectos geométricos com estatísticas
+========================================================
+class: small-code
+
+Cada geom calcula uma estatística, um **stats**, para apresentar o respectivo gráfico.
+
+Alguns usam os dados directamente (como o `geom_point`) outros calculam estatísticas dos dados para mostrar essa contagem (como o `geom_bar` que soma os valores, ou o `geom_boxplot` que calcula quartis).
+
+É possivel mudar essa estatística dizendo ao ggplot o que calcular.
+
+***
+
+```{r}
+ggplot(diamonds, aes(carat)) + 
+  xlim(0, 3) + 
+  geom_area(stat="density")
+```
+
+
+Conectar objectos geométricos com estatísticas
+========================================================
+class: small-code
+
+O mesmo gráfico com outra estatística (`bin` conta os vários elementos que se encontram em intervalos sucessivos):
+
+```{r, fig.width=12}
+ggplot(diamonds, aes(carat)) + 
+  xlim(0, 3) + 
+  geom_area(stat="bin", binwidth=0.1)
+```
+
+Conectar objectos geométricos com estatísticas
+========================================================
+class: small-code
+
+Algumas estatísticas são calculadas a partir das funções `stat_XX` do ggplot2:
+
+```{r, eval=FALSE}
+p <- ggplot(d, aes(carat, price))
+p + geom_point()
+p + geom_density2d(stat="density2d")
+p + stat_binhex(bins=10)
+```
+
+```{r, echo=FALSE, fig.width=24}
+library(gridExtra)
+plot1 <- ggplot(d, aes(carat, price)) + geom_point()
+plot2 <- ggplot(d, aes(carat, price)) + geom_density2d()
+plot3 <- ggplot(d, aes(carat, price)) + stat_binhex(bins=10)
+grid.arrange(plot1, plot2, plot3, ncol=3)
+```
+
+
+
+Mudança de coordenadas
+========================================================
+class: small-code
+
+
+```{r}
+ggplot(data = diamonds) + 
+  geom_bar(aes(x=cut, fill=cut), width=1) + 
+  coord_polar()
+```
+
+***
+
+```{r}
+ggplot(data = diamonds) + 
+  geom_bar(aes(x=factor(1), fill=cut), width=1) + # fica só com uma coluna
+  coord_polar(theta="y")
+```
+
+Mudança de coordenadas
+========================================================
+class: small-code
+
+Um exemplo mais complexo com mapas:
+
+```{r, eval=FALSE}
+library(maps)
+
+m <- map_data("italy")
+p <- ggplot(m, aes(x=long, y=lat, group=group)) +
+        geom_polygon(fill="white", colour="black")
+p                # coordenadas cartesianas
+p + coord_map()  # projecao de marcator
+```
+
+
+```{r, echo=FALSE, fig.width=18}
+library(maps)
+
+m <- map_data("italy")
+p <- ggplot(m, aes(x=long, y=lat, group=group)) +
+            geom_polygon(fill="white", colour="black")
+plot1 <- p                # coordenadas cartesianas
+plot2 <- p + coord_map()  # projecao de marcator
+grid.arrange(plot1, plot2, ncol=2)
+```
+
+
+Facetas
+========================================================
+class: small-code
+
+As facetas permitem multiplicar os gráficos por cada categoria:
+
+```{r, fig.width=24, fig.height=12}
+ggplot(d, aes(carat, price, colour=cut, group=cut)) +
+  geom_point() +
+  geom_smooth(method="lm", level=0.5) +
+  facet_wrap(~ cut)
+```
+
+Facetas
+========================================================
+class: small-code
+
+Esta técnica salienta os dados de cada categoria:
+
+```{r, fig.width=12, fig.height=6}
+df <- dplyr::select(iris, -Species)
+
+ggplot(iris, aes(Sepal.Length, Petal.Length)) + theme_bw() +
+  geom_point(data=df, colour="grey70") +
+  geom_point(aes(colour=Species)) +
+  facet_wrap(~ Species)
+```
+
+
+Estrutura de um gráfico ggplot
+========================================================
+
+O gráfico típico em ggplot segue este padrão:
+
+```{r, eval=FALSE}
+ggplot(data = <DATA>) + 
+  <GEOM_FUNCTION>( mapping  = aes(<MAPPINGS>),
+                   stat     = <STAT>, 
+                   position = <POSITION> ) +
+  <COORDINATE_FUNCTION> +
+  <FACET_FUNCTION>
+```
+
+Links úteis:
+
++ [http://www.cookbook-r.com/Graphs/](http://www.cookbook-r.com/Graphs/)
+
++ [http://zevross.com/blog/2014/08/04/beautiful-plotting-in-r-a-ggplot2-cheatsheet-3/](http://zevross.com/blog/2014/08/04/beautiful-plotting-in-r-a-ggplot2-cheatsheet-3/)
+
++ [http://www.ling.upenn.edu/~joseff/avml2012/](http://www.ling.upenn.edu/~joseff/avml2012/)
+
